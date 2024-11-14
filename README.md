@@ -30,7 +30,7 @@ From a command prompt, navigate to your chosen install folder, then clone the re
 git clone git@git.ccfe.ac.uk:sherschm/rotaryinvertedpendulum.git
 ```
 ```bash
-cd rotaryinvertedpendulum
+cd RotaryInvertedPendulum
 ```
 ## To run the modelling & simulation script from cmd prompt:
 ```bash
