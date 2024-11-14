@@ -43,3 +43,6 @@ cd RotaryInvertedPendulum
 julia main.jl
 ```
 This commented script runs through the model derivation and simulation.
+
+## Next steps...
+Control!
