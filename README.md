@@ -36,5 +36,4 @@ cd rotaryinvertedpendulum
 ```bash
 julia main.jl
 ```
-
-
+This commented script runs through the model derivation and simulation.
