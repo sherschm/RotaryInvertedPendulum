@@ -20,6 +20,7 @@ Pkg.add("LinearAlgebra")
 Pkg.add("Plots")
 Pkg.add("DifferentialEquations")
 Pkg.add("Interpolations")
+exit()
 ```
 
 ## Installation:
