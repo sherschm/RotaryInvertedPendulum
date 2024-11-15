@@ -31,6 +31,7 @@ exit()
 ## To run the modelling & simulation script from command line:
 Clone the repository and move to its directory.
 
+Run the modelling script:
 ```bash
 julia main.jl
 ```
