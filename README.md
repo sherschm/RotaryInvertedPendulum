@@ -28,17 +28,9 @@ Pkg.add("Interpolations")
 exit()
 ```
 
-## Installation:
+## To run the modelling & simulation script from command line:
+Clone the repository and move to its directory.
 
-From a command prompt, navigate to your chosen install folder, then clone the repoo:
-
-```bash
-git clone git@github.com:sherschm/RotaryInvertedPendulum.git
-```
-```bash
-cd RotaryInvertedPendulum
-```
-## To run the modelling & simulation script from cmd prompt:
 ```bash
 julia main.jl
 ```
