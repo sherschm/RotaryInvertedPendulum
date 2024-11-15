@@ -33,7 +33,7 @@ exit()
 From a command prompt, navigate to your chosen install folder, then clone the repoo:
 
 ```bash
-git clone git@git.ccfe.ac.uk:sherschm/rotaryinvertedpendulum.git
+git clone git@github.com:sherschm/RotaryInvertedPendulum.git
 ```
 ```bash
 cd RotaryInvertedPendulum
