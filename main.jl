@@ -66,34 +66,40 @@ T=T_rot+T_lin
 #Gravitational potential energy of pendulum L-bar
 V=m*g*(R20'*rc)[3]
 
+#create functions for calculating system energy at a given time
+T_f=eval(build_function(T, [θ1, θ2, θ1d, θ2d]...))
+V_f=eval(build_function(V, [θ1, θ2, θ1d, θ2d]...))
+Total_energy(x)=T_f(x...)+V_f(x...)
+
 #generate Lagrangian model matrices / vectors
 M,N=Lagrangian_dynamics(T,V)
 
 ##Convert symbolic terms M and N into Julia functions
-M_f=eval(build_function(M, [θ1, θ2])[1])
-N_f=eval(build_function(N, [θ1, θ2,θ1d, θ2d])[1])
+M_f=eval(build_function(M, [θ1, θ2]...)[1])
+N_f=eval(build_function(N, [θ1, θ2, θ1d, θ2d]...)[1])
 
 #Define first order ODE form of dynamic model 
 function rot_pend_dynamics(x,p,t)
     ## put dynamics in this form: xdot=f(x,u)
     τ=0 #e.g: no control
   
-    #Fric1=0# friction at the motor joint
-    #Fric2=0 # friction at the pendulum swing joint
+    Fric1=0# friction at the motor joint
+    Fric2=0 # friction at the pendulum swing joint
   
-    Fric1=-0.001*x[3] # friction at the motor joint
-    Fric2=-0.00005*x[4] # friction at the pendulum swing joint
+    #Fric1=-0.001*x[3] # friction at the motor joint
+    #Fric2=-0.00005*x[4] # friction at the pendulum swing joint
   
-    return [x[3:4];inv(M_f(x[1:2]))*([τ+Fric1;Fric2]-N_f(x))]
+    return [x[3:4];inv(M_f(x[1:2]...))*([τ+Fric1;Fric2]-N_f(x...))]
 end
 
 #Define simulation problem parameters
-q0=[0;pi+0.1;0;0] #initial conditions
+q0=[0;0.1;0;0] #initial conditions
 tspan = (0.0, 10.0)
 prob = ODEProblem(rot_pend_dynamics, q0, tspan)
 
 #Simulate & animate!
 tvec,q_sol,qd_sol=pend_sim(prob)
+plot_energy(tvec,q_sol,qd_sol)
 
 #plot the response of the generalised coordinates
 plot(tvec,q_sol,label=["theta1" "theta2"],xlabel="Time (s)",ylabel="Angle (rad)")
@@ -119,7 +125,7 @@ end
 input(t)=sin(10*t)
 inputd(t)=10*cos(10*t)
 
-q0=[0;pi+0.1;input(0);0] #initial conditions - these are: [θ1(t_0);θ2(t_0);θ2d(t_0)].
+q0=[0;0.1;input(0);0] #initial conditions - these are: [θ1(t_0);θ2(t_0);θ2d(t_0)].
 tspan = (0.0, 10.0)
 stepper_prob = ODEProblem(rot_pend_dynamics_stepper, q0, tspan)
 
@@ -136,3 +142,6 @@ A=
 B=
 C=
 D= =#
+
+
+

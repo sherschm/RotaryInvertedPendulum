@@ -37,7 +37,7 @@ end
   
 function rot_pendulum_animator(x_sol,tvec)
     #pendulum animation creation
-
+    println("Creating animation...")
     anim_fps=20
     tvec_anim=1/anim_fps:1/anim_fps:maximum(tvec)
 
@@ -50,4 +50,14 @@ function rot_pendulum_animator(x_sol,tvec)
     end
 
     gif(anim,"rotary_pendulum_anim.gif",fps=anim_fps);
+end
+
+function plot_energy(tvec,q_sol,qd_sol)
+    n=length(tvec)
+    energy=zeros(n)
+    for i in 1:n
+        energy[i]=Total_energy([q_sol[i,:];qd_sol[i,:]])
+    end
+    plot(tvec,energy,xlabel="Time (s)",ylabel="Total system energy T+V (J)",ylims=(0,1.5*maximum(energy)))
+    savefig("energy_plot")
 end

@@ -38,7 +38,7 @@ function pend_sim(prob)
 
   #Simulates and makes animation of the rotary pendulum system
   println("Generating response...")
-  sol = solve(prob)#,Tsit5(), reltol=1e-8, abstol=1e-8)
+  sol = solve(prob, reltol = 1e-5, abstol = 1e-5)#,Tsit5(), reltol=1e-8, abstol=1e-8)
   tvec=sol.t
 
   #unpack solution
