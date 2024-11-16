@@ -26,7 +26,7 @@ function memoize(foo::Function, n_outputs::Int)
 end
 
 Δt=0.05
-n_traj=90
+n_traj=120
 
 cmd=[0.0;pi]
 
@@ -94,10 +94,11 @@ JuMP.@operator(model, objective, (2*ndof+1)*n_traj, Static_obj_func)
 JuMP.@operator(model, Dyn_constr1, 3*ndof+1,Dyn_constraint_memo[1])
 JuMP.@operator(model, Dyn_constr2, 3*ndof+1,Dyn_constraint_memo[2])
 
-JuMP.@constraint(model,q[(n_traj-1)*ndof+2]==pi)
-JuMP.@constraint(model,q[(n_traj-1)*ndof+1]==0)
+JuMP.@constraint(model,q[(n_traj-1)*ndof+1]==cmd[1])
+JuMP.@constraint(model,q[(n_traj-1)*ndof+2]==cmd[2])
 JuMP.@constraint(model,qd[(n_traj-1)*ndof+2]==0)
 JuMP.@constraint(model,qd[(n_traj-1)*ndof+1]==0)
+
 for j in 1:n_traj
 
   JuMP.@constraint(model,Dyn_constr1(q[(j-1)*ndof+1:j*ndof]...,qd[(j-1)*ndof+1:j*ndof]...,qdd[(j-1)*ndof+1:j*ndof]...,F_ee[j]...)==0)
@@ -107,7 +108,7 @@ for j in 1:n_traj
   JuMP.@constraint(model,-0.4<=F_ee[j]<=0.4)
   #JuMP.@constraint(model,-pi<=q[(j-1)*ndof+1]<=pi)
  # JuMP.@constraint(model,-10<=qd[(j-1)*ndof+1]<=10)
-  JuMP.@constraint(model,-20<=qdd[(j-1)*ndof+1]<=20)
+  JuMP.@constraint(model,-10<=qdd[(j-1)*ndof+1]<=10)
 
   for i in 1:ndof
       if j==1
@@ -133,12 +134,13 @@ JuMP.optimize!(model)
 #E_opt=JuMP.value.(Ehat)
 if size(q,1)==1 || size(q,2)==1
     q_opt_val = reshape(JuMP.value.(q), (ndof, n_traj))'
+    qd_opt_val = reshape(JuMP.value.(qd), (ndof, n_traj))'
+    qdd_opt_val = reshape(JuMP.value.(qdd), (ndof, n_traj))'
     #F_opt_val=F_ee
 else
     q_opt_val=JuMP.value.(q)
 end
-qd_opt_val=JuMP.value.(qd)
-qdd_opt_val=JuMP.value.(qdd)
+
 F_ee_opt=JuMP.value.(F_ee)
 
 #JuMP.value.(J)
