@@ -5,9 +5,11 @@ using LinearAlgebra
 using DifferentialEquations
 using Plots
 using Interpolations
+using JuMP, Ipopt
 
 include("plotting_funcs.jl")
 include("modelling_funcs.jl")
+include("TrajOptim.jl")
 
 println("Creating model")
 ##define system parameters
@@ -37,7 +39,7 @@ Ry(θ)=[cos(θ) 0 sin(θ);
 -sin(θ) 0 cos(θ)] 
 
 ##symbolic model derivation - using Julia's Symbolics.jl toolbox
-@variables t θ1(t) θ2(t) θ1d(t) θ2d(t) θ1dd(t) θ2dd(t) τ #instantiate symbolic coordinates and their velocities (and accelerations), 
+Symbolics.@variables t θ1(t) θ2(t) θ1d(t) θ2d(t) θ1dd(t) θ2dd(t) τ #instantiate symbolic coordinates and their velocities (and accelerations), 
 Dt = Differential(t) #time derivative operator
 
 # rotation matrix of the body with respect to the inertial frame: a yaw-pitch rotation
@@ -105,8 +107,15 @@ plot_energy(tvec,q_sol,qd_sol)
 plot(tvec,q_sol,label=["theta1" "theta2"],xlabel="Time (s)",ylabel="Angle (rad)")
 savefig("response")
 
+##Calculate the spin-up trajectory!
+Δt=0.05
+n_traj=120
+cmd=[0.0;pi] #command position
+q_spin_up, qd_spin_up, qd_spin_up, torq_spin_up=SpinUpTrajectory(cmd,n_traj,Δt)
+
+#=
 ##models of stepper motor system:
-@variables u(t) ud(t)
+Symbolics.@variables u(t) ud(t)
 
 M_stepper, N_stepper=stepper_dynamics(M,N)
 
@@ -132,6 +141,7 @@ stepper_prob = ODEProblem(rot_pend_dynamics_stepper, q0, tspan)
 #Simulate & animate!
 tvec,q_sol,qd_sol=pend_sim(stepper_prob)
 
+=#
 ## TO DO: ADD CONTROL SIMULATION - PID and then LQR, perhaps Energy shaping for 'spin up'?
 ## TO DO: find way to simulate forces from the stepper motor (since we can't control the torque directly)...
 #  this may require Lagrange multipliers to constrain the velocity to a given value... not sure yet...

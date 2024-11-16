@@ -35,7 +35,7 @@ function general_lin_interp(dataset,tvec,tvec_new)
     return interped_data
 end
   
-function rot_pendulum_animator(x_sol,tvec)
+function rot_pendulum_animator(x_sol,tvec;name="rotary_pendulum_anim")
     #pendulum animation creation
     println("Creating animation...")
     anim_fps=20
@@ -49,7 +49,7 @@ function rot_pendulum_animator(x_sol,tvec)
         plot!(label=string(i/anim_fps))
     end
 
-    gif(anim,"rotary_pendulum_anim.gif",fps=anim_fps);
+    gif(anim,"anims//"*name*".gif",fps=anim_fps);
 end
 
 function plot_energy(tvec,q_sol,qd_sol)
