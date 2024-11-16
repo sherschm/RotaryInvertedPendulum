@@ -70,7 +70,7 @@ V=m*g*(R20'*rc)[3]
 M,N=Lagrangian_dynamics(T,V)
 
 ##Convert symbolic terms M and N into Julia functions
-M_f=eval(build_function(M, [θ1, θ2,θ1d, θ2d])[1])
+M_f=eval(build_function(M, [θ1, θ2])[1])
 N_f=eval(build_function(N, [θ1, θ2,θ1d, θ2d])[1])
 
 #Define first order ODE form of dynamic model 
@@ -84,7 +84,7 @@ function rot_pend_dynamics(x,p,t)
     Fric1=-0.001*x[3] # friction at the motor joint
     Fric2=-0.00005*x[4] # friction at the pendulum swing joint
   
-    return [x[3:4];inv(M_f(x))*([τ+Fric1;Fric2]-N_f(x))]
+    return [x[3:4];inv(M_f(x[1:2]))*([τ+Fric1;Fric2]-N_f(x))]
 end
 
 #Define simulation problem parameters
@@ -98,6 +98,33 @@ tvec,q_sol,qd_sol=pend_sim(prob)
 #plot the response of the generalised coordinates
 plot(tvec,q_sol,label=["theta1" "theta2"],xlabel="Time (s)",ylabel="Angle (rad)")
 savefig("response")
+
+##models of stepper motor system:
+@variables u(t) ud(t)
+
+M_stepper, N_stepper=stepper_dynamics(M,N)
+
+M_stepper_f=eval(build_function(M_stepper, [θ1, θ2]))
+N_stepper_f=eval(build_function(N_stepper, [θ1, θ2, u, θ2d, ud]))
+
+#Define first order ODE form of dynamic model 
+function rot_pend_dynamics_stepper(x,p,t)
+    ## put dynamics in this form: xdot=f(x,u)
+
+    Fric2=-0.00005*x[3] # friction at the pendulum swing joint
+  
+    return [input(t);x[4];inputd(t);(Fric2-N_stepper_f([x[1];x[2];input(t);x[4];inputd(t)]))/M_stepper_f([x[1];x[2]])]
+end
+
+input(t)=sin(10*t)
+inputd(t)=10*cos(10*t)
+
+q0=[0;pi+0.1;input(0);0] #initial conditions - these are: [θ1(t_0);θ2(t_0);θ2d(t_0)].
+tspan = (0.0, 10.0)
+stepper_prob = ODEProblem(rot_pend_dynamics_stepper, q0, tspan)
+
+#Simulate & animate!
+tvec,q_sol,qd_sol=pend_sim(stepper_prob)
 
 ## TO DO: ADD CONTROL SIMULATION - PID and then LQR, perhaps Energy shaping for 'spin up'?
 ## TO DO: find way to simulate forces from the stepper motor (since we can't control the torque directly)...

@@ -55,3 +55,16 @@ function pend_sim(prob)
   return tvec, x_sol, xdot_sol
 end
 
+
+function stepper_dynamics(M,N)
+  #Reduces the equations for the situation where velocity of θ1 is the control input.
+
+  Eq=M[2,:]'*[θ1dd;θ2dd]+N[2]
+  M_stepper=Symbolics.coeff(Eq, θ2dd)
+  N_stepper=simplify.(expand.(Eq-expand.(M_stepper*θ2dd))) 
+
+  subs=Dict(θ1d => u, θ1dd => ud)
+
+  N_stepper=substitute(N_stepper,(subs))
+  return M_stepper, N_stepper
+end
