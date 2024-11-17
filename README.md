@@ -1,7 +1,10 @@
 # Rotary Pendulum Simulation
 
-- This repository contains a Julia script that derives the nonlinear state-space equations of motion of the EduKit inverted rotary pendulum,
-intended to be used in the UKAEA PACE training programme. The derivation of this model is detailed in [the pdf.](https://github.com/sherschm/RotaryInvertedPendulum/blob/main/Modelling%20%26%20Simulation%20of%20a%20rotary%20inverted%20pendulum.pdf)
+- This repository contains a Julia script that derives the nonlinear state-space equations of motion of the EduKit inverted rotary pendulum, intended to be used in the UKAEA PACE training programme. 
+
+<img src="./plots/setup.png" alt="set-up" width="500"/> 
+
+The derivation of this model is detailed in [the pdf.](https://github.com/sherschm/RotaryInvertedPendulum/blob/main/Modelling%20%26%20Simulation%20of%20a%20rotary%20inverted%20pendulum.pdf)
 
 
 ## Preliminaries
