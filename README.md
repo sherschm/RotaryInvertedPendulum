@@ -36,14 +36,12 @@ julia main.jl
 
 This commented script runs through the model derivation and simulates the system from chosen initial conditions  $[ \theta_1(t_0) \\ \theta_2(t_0) \\ \dot{\theta}_1(t_0) \\ \dot{\theta}_2(t_0)]$ :
 
-<!-- ![uncontrolled cartpole gif](./anims/rotary_pendulum_anim.gif =250x) -->
-<img src="./anims/rotary_pendulum_anim.gif" alt="gif" width="500"/> <img src="./plots/response.png" alt="pendulum response" width="400"/>
-<!-- ![pendulum response](./plots/response.png =250x) -->
-
+<img src="./anims/rotary_pendulum_anim.gif" alt="response_gif" width="500"/> <img src="./plots/response.png" alt="pendulum response" width="400"/>
 
 Then, it generates a 'swing-up' trajectory to get the pendulum from $\theta_2=0$ to $\theta_2=\pi$, using Interior point optimisation:
 
-![spin-up gif](./anims/swing_up.gif)
+
+<img src="./anims/swing_up.gif" alt="spin-up gif" width="500"/> <img src="./plots/swing_up_traj.png" alt="swing-up response" width="400"/>
 
 ## Next steps...
 - System Identification methodology to improve model parameters

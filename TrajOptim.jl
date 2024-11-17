@@ -112,6 +112,10 @@ function SpinUpTrajectory(cmd,n_traj,Δt)
     #animate!
     rot_pendulum_animator(q_opt_val,tvec;name="swing_up")
 
+    #plot the response of the generalised coordinates
+    plot(tvec,q_opt_val,label=["theta1" "theta2"],xlabel="Time (s)",ylabel="Angle (rad)")
+    savefig("plots//swing_up_traj")
+
     #output trajectory position, velocity, acceleration and motor torque profiles
     return q_opt_val, qd_opt_val, qdd_opt_val, torq_opt
 end

@@ -1,5 +1,5 @@
 
-println("Importing packages")
+println("Importing packages...")
 using Symbolics
 using LinearAlgebra
 using DifferentialEquations
@@ -11,7 +11,7 @@ include("plotting_funcs.jl")
 include("modelling_funcs.jl")
 include("TrajOptim.jl")
 
-println("Creating model")
+println("Creating model...")
 ##define system parameters
 r=0.008 # L-bar radius (in m)
 m1=0.008 # L-bar horizontal section mass (in kg)
