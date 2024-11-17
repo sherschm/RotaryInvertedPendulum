@@ -4,7 +4,7 @@
 
 <img src="./plots/setup.png" alt="set-up" width="500"/> 
 
-The derivation of this model is detailed in [the pdf.](https://github.com/sherschm/RotaryInvertedPendulum/blob/main/Modelling%20%26%20Simulation%20of%20a%20rotary%20inverted%20pendulum.pdf)
+The derivation of the dynamic model is detailed in [the pdf.](https://github.com/sherschm/RotaryInvertedPendulum/blob/main/Modelling%20%26%20Simulation%20of%20a%20rotary%20inverted%20pendulum.pdf)
 
 
 ## Preliminaries
@@ -28,7 +28,7 @@ Pkg.add("Ipopt")
 exit()
 ```
 
-## To run the modelling & simulation & swing-up script from cmd prompt:
+## To run the code from cmd prompt:
 Clone the repository and move to its directory.
 
 Run the script:
@@ -43,9 +43,8 @@ This commented script runs through the model derivation and simulates the system
 
 Then, it generates a 'swing-up' trajectory to get the pendulum from $\theta_2=0$ to $\theta_2=\pi$, using Interior point optimisation:
 
-
 <img src="./anims/swing_up.gif" alt="spin-up gif" width="500"/> <img src="./plots/swing_up_traj.png" alt="swing-up response" width="400"/>
 
 ## Next steps...
-- System Identification methodology to improve model parameters
+- System Identification methodology to improve model parameters from motion data.
 - Feedback Control (such as LQR)
