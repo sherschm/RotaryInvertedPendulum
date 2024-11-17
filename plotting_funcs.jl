@@ -58,6 +58,6 @@ function plot_energy(tvec,q_sol,qd_sol)
     for i in 1:n
         energy[i]=Total_energy([q_sol[i,:];qd_sol[i,:]])
     end
-    plot(tvec,energy,xlabel="Time (s)",ylabel="Total system energy T+V (J)",ylims=(0,1.5*maximum(energy)))
-    savefig("energy_plot")
+    plot(tvec,energy,xlabel="Time (s)",ylabel="Total system energy T+V (J)")
+    savefig("plots//energy_plot")
 end

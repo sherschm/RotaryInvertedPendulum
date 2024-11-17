@@ -57,7 +57,7 @@ R20_dot=substitute(R20_dot, (subs1))
 T_rot=0.5*ω'*Ip*ω
 
 #velocity of centre of mass of pendulum L-bar
-v_com=R20_dot'*rc#cross(rc,ω)
+v_com=R20_dot'*rc
 
 #Linear Kinetic energy of pendulum L-bar centre of mass
 T_lin=0.5*m*v_com'*v_com
@@ -95,23 +95,32 @@ function rot_pend_dynamics(x,p,t)
 end
 
 #Define simulation problem parameters
-q0=[0.0;0.0;0;0] #initial conditions
+q0=[0.0;0.1;0;0] #initial conditions
 tspan = (0.0, 10.0)
 prob = ODEProblem(rot_pend_dynamics, q0, tspan)
 
 #Simulate & animate!
 tvec,q_sol,qd_sol=pend_sim(prob)
-plot_energy(tvec,q_sol,qd_sol)
+
+#Plotting total energy can be a useful for model verification.
+    #If no damping or actuation, energy should be constant,
+    #   (or on the order of the ODE solver tolerance)
+plot_energy(tvec,q_sol,qd_sol) 
 
 #plot the response of the generalised coordinates
 plot(tvec,q_sol,label=["theta1" "theta2"],xlabel="Time (s)",ylabel="Angle (rad)")
-savefig("response")
+savefig("plots//response")
 
 ##Calculate the spin-up trajectory!
-Δt=0.05
-n_traj=120
-cmd=[pi;pi] #command position
+Δt=0.05 #trajectory time-step
+n_traj=120 #number of trajectory points
+tmax=n_traj*Δt
+cmd=[0;pi] #pendulum command position
 q_spin_up, qd_spin_up, qd_spin_up, torq_spin_up=SpinUpTrajectory(cmd,n_traj,Δt);
+
+
+
+
 
 #=
 ## models of stepper motor system (e.g direct velocity control):
