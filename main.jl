@@ -95,7 +95,7 @@ function rot_pend_dynamics(x,p,t)
 end
 
 #Define simulation problem parameters
-q0=[0;0.1;0;0] #initial conditions
+q0=[0.0;0.0;0;0] #initial conditions
 tspan = (0.0, 10.0)
 prob = ODEProblem(rot_pend_dynamics, q0, tspan)
 
@@ -110,11 +110,11 @@ savefig("response")
 ##Calculate the spin-up trajectory!
 Δt=0.05
 n_traj=120
-cmd=[0.0;pi] #command position
-q_spin_up, qd_spin_up, qd_spin_up, torq_spin_up=SpinUpTrajectory(cmd,n_traj,Δt)
+cmd=[pi;pi] #command position
+q_spin_up, qd_spin_up, qd_spin_up, torq_spin_up=SpinUpTrajectory(cmd,n_traj,Δt);
 
 #=
-##models of stepper motor system:
+## models of stepper motor system (e.g direct velocity control):
 Symbolics.@variables u(t) ud(t)
 
 M_stepper, N_stepper=stepper_dynamics(M,N)
