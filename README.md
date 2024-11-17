@@ -25,28 +25,26 @@ Pkg.add("Ipopt")
 exit()
 ```
 
-## Installation:
+## To run the modelling & simulation & swing-up script from cmd prompt:
+Clone the repository and move to its directory.
 
-From a command prompt, navigate to your chosen install folder, then clone the repoo:
+Run the script:
 
-```bash
-git clone git@github.com:sherschm/RotaryInvertedPendulum.git
-```
-```bash
-cd RotaryInvertedPendulum
-```
-## To run the modelling & simulation script from cmd prompt:
 ```bash
 julia main.jl
 ```
+
 This commented script runs through the model derivation and simulates the system from chosen initial conditions  $[ \theta_1(t_0) \\ \theta_2(t_0) \\ \dot{\theta}_1(t_0) \\ \dot{\theta}_2(t_0)]$ :
 
-![uncontrolled cartpole gif](./anims/rotary_pendulum_anim.gif) ![pendulum response](./plots/response.png)
+<!-- ![uncontrolled cartpole gif](./anims/rotary_pendulum_anim.gif =250x) -->
+<img src="./anims/rotary_pendulum_anim.gif" alt="gif" width="500"/> <img src="./plots/response.png" alt="pendulum response" width="400"/>
+<!-- ![pendulum response](./plots/response.png =250x) -->
 
-Then it generates a 'swing-up' trajectory to get the pendulum from $\theta_2=0$ to $\theta_2=\pi$, using Interior point optimisation:
+
+Then, it generates a 'swing-up' trajectory to get the pendulum from $\theta_2=0$ to $\theta_2=\pi$, using Interior point optimisation:
 
 ![spin-up gif](./anims/swing_up.gif)
 
 ## Next steps...
-- System Identification methodology
+- System Identification methodology to improve model parameters
 - Feedback Control (such as LQR)
