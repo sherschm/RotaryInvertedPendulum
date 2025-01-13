@@ -1,3 +1,4 @@
+using JuMP, Ipopt
 
 function memoize(foo::Function, n_outputs::Int)
   last_x, last_f = nothing, nothing
@@ -19,7 +20,9 @@ function memoize(foo::Function, n_outputs::Int)
 end
 
 
-function SpinUpTrajectory(cmd,n_traj,Δt)
+function SpinUpTrajectory(cmd,n_traj,Δt,q0,dynamic_funcs,T_f)
+    M_f, N_f=dynamic_funcs
+
     println("Building swing-up trajectory optimisation problem...")
     ndof=2
     model = JuMP.Model(Ipopt.Optimizer)
@@ -84,8 +87,6 @@ function SpinUpTrajectory(cmd,n_traj,Δt)
 
         # define motor velocity & acceleration constraints if you need
         JuMP.@constraint(model,-0.4<=torq[j]<=0.4)
-        #JuMP.@constraint(model,-pi<=q[(j-1)*ndof+1]<=pi)
-        #JuMP.@constraint(model,-10<=qd[(j-1)*ndof+1]<=10)
         JuMP.@constraint(model,-10<=qdd[(j-1)*ndof+1]<=10)
 
         for i in 1:ndof
@@ -107,14 +108,7 @@ function SpinUpTrajectory(cmd,n_traj,Δt)
     qdd_opt_val = reshape(JuMP.value.(qdd), (ndof, n_traj))'
     torq_opt=JuMP.value.(torq)
 
-    tvec=Δt:Δt:n_traj*Δt
-
-    #animate!
-    rot_pendulum_animator(q_opt_val,tvec;name="swing_up")
-
-    #plot the response of the generalised coordinates
-    plot(tvec,q_opt_val,label=["theta1" "theta2"],xlabel="Time (s)",ylabel="Angle (rad)")
-    savefig("plots//swing_up_traj")
+    #tvec=Δt:Δt:n_traj*Δt
 
     #output trajectory position, velocity, acceleration and motor torque profiles
     return q_opt_val, qd_opt_val, qdd_opt_val, torq_opt

@@ -7,7 +7,7 @@ L2_tip_pos(θ_1,θ_2)=Symbolics.value.(substitute(R20,Dict([θ1 => θ_1, θ2 => 
 function plot_rot_pendulum(q)
     plot([0;L1_tip_pos(q[1])[1];L2_tip_pos(q[1],q[2])[1]],[0;L1_tip_pos(q[1])[2];L2_tip_pos(q[1],q[2])[2]],[0;L1_tip_pos(q[1])[3];L2_tip_pos(q[1],q[2])[3]],
     aspect_ratio=:equal,
-    xlims=(-0.15,0.15),ylims=(-0.15,0.15),zlims=(-0.15,0.15),
+    xlims=(-0.3,0.3),ylims=(-0.3,0.3),zlims=(-0.3,0.3),
     label=false,
     linewidth=8)
     #plot([0;L1_tip_pos(q[1])[1];L2_tip_pos(q[1],q[2])[1]],[0;L1_tip_pos(q[1])[2];L2_tip_pos(q[1],q[2])[2]],aspect_ratio=:equal,xlims=(-0.15,0.15),ylims=(-0.15,0.15))
@@ -16,7 +16,7 @@ end
 function plot_rot_pendulum(q,i,Δt)
     plot([0;L1_tip_pos(q[1])[1];L2_tip_pos(q[1],q[2])[1]],[0;L1_tip_pos(q[1])[2];L2_tip_pos(q[1],q[2])[2]],[0;L1_tip_pos(q[1])[3];L2_tip_pos(q[1],q[2])[3]],
     aspect_ratio=:equal,
-    xlims=(-0.15,0.15),ylims=(-0.15,0.15),zlims=(-0.15,0.15),
+    xlims=(-0.3,0.3),ylims=(-0.3,0.3),zlims=(-0.3,0.3),
     label=false,
     title="Time = "*string(floor(i*Δt))*" s",
     linewidth=8)
