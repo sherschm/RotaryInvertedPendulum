@@ -135,6 +135,7 @@ function dynamics_acc_ctrl(x, p, t)
   θd=collect(x[3:4])
   M_a, N_a, B_a = dynamics_acc_ctrl(M_f(θ...),N_f(x...))
 
+
   Fric2=0.0#-0.00005*x[3] # friction at the pendulum swing joint
 
   return vec([θd;inv(M_a)*(B_a*u_f(x,t)-[0.0;Fric2]-N_a)])

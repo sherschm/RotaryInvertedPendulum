@@ -111,7 +111,26 @@ Q=Diagonal([0.1,0.01,0.001,0.001])
 R=0.001 #weighting matrix
 K_opt=lqr(sys_cont, Q, R) #Optimal feedback gain matrix
 
-u_f(x,t)=(-K_opt*(x-x_equil))[1] #here x_equil is actually the desired operating point (we can change θ1 if we want to move the arm)
+
+function u_f(x,t)
+    ##acceleration control law
+    #acc=(-K_opt*(x-x_equil))[1] #if we want to control both angles
+    acc=(-K_opt*([0;(x-x_equil)[2:4]]))[1] #if we only care about θ2 stabilisation
+    
+    #simulate maximum acceleration limits
+    max_acc=40 #rad/s
+
+    if acc>=max_acc
+        acc_limited=max_acc
+    elseif acc<=-max_acc
+        acc_limited=-max_acc
+    else
+        acc_limited=acc
+    end
+
+    return acc_limited
+end
+
 
 #simulate!
 q0=[0.1;pi+0.1;0;0] #initial conditions - these are: [θ1(t_0);θ2(t_0);θ2d(t_0)].
@@ -126,23 +145,24 @@ for i in 1:length(tvec)
     ctrl_vec[i]=u_f([q_sol[i,:];qd_sol[i,:]],tvec[i])
 end
 
-rot_pendulum_animator(q_sol,tvec;name="LQR_stabilisation")
-
 #plot the response of the generalised coordinates
 plot(tvec,q_sol,label=["theta1" "theta2"],xlabel="Time (s)",ylabel="Angle (rad)")
 savefig("plots//response")
 
-plot(tvec,ctrl_vec,xlabel="Time (s)",ylabel="Control (m/s^2)")
+plot(tvec,ctrl_vec,xlabel="Time (s)",ylabel="Control (rad/s^2)")
+savefig("plots//control_acceleration")
 
+#animate!
+rot_pendulum_animator(q_sol,tvec;name="LQR_stabilisation")
 
-q0=[0.0;0.0;0;0] #initial conditions
 ##Calculate the spin-up trajectory!
+q0=[0.0;0.0;0;0] #initial conditions
 Δt=0.05 #trajectory time-step
 n_traj=120 #number of trajectory points
 tmax=n_traj*Δt
 tvec=Δt:Δt:tmax
 cmd=[x_equil[1];x_equil[2]] #pendulum command position
-q_spin_up, qd_spin_up, qd_spin_up, torq_spin_up=SpinUpTrajectory(cmd,n_traj,Δt,q0,dynamic_funcs,T_f);
+q_spin_up, qd_spin_up, qdd_spin_up, torq_spin_up=SpinUpTrajectory(cmd,n_traj,Δt,q0,dynamic_funcs,T_f);
 
 #animate!
 rot_pendulum_animator(q_spin_up,tvec;name="swing_up")
