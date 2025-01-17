@@ -37,7 +37,7 @@ Run the script:
 julia main.jl
 ```
 
-This commented script runs through the model derivation and simulates the system's free response (no motor torque) from chosen initial conditions  $[ \theta_1(t_0) \\ \theta_2(t_0) \\ \dot{\theta}_1(t_0) \\ \dot{\theta}_2(t_0)]$ :
+This commented script runs through the model derivation and simulates LQR stabilisation control from some set of initial conditions: $[ \theta_1(t_0) \\ \theta_2(t_0) \\ \dot{\theta}_1(t_0) \\ \dot{\theta}_2(t_0)]$ :
 
 <img src="./anims/rotary_pendulum_anim.gif" alt="response_gif" width="480"/> <img src="./plots/response.png" alt="pendulum response" width="350"/>
 
@@ -46,5 +46,6 @@ Then, it generates a 'swing-up' trajectory to get the pendulum from $\theta_2=0$
 <img src="./anims/swing_up.gif" alt="spin-up gif" width="480"/> <img src="./plots/swing_up_traj.png" alt="swing-up response" width="350"/>
 
 ## Next steps...
-- System Identification methodology to improve model parameters from motion data.
-- Feedback Control (such as LQR)
+- Measure actual pendulum & correct parameters.
+- Consider implementing a discrete time LQR if the control timestep is large.
+- Implement robust control?
