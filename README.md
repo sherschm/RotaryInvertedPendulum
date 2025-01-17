@@ -6,38 +6,25 @@
 
 The derivation of the dynamic model is detailed in [the pdf.](https://github.com/sherschm/RotaryInvertedPendulum/blob/main/Modelling%20%26%20Simulation%20of%20a%20rotary%20inverted%20pendulum.pdf)
 
-
 ## Preliminaries
-[Install Julia](https://docs.julialang.org/en/v1/manual/installation/)
+- Install VSCode
 
-From a command prompt, run Julia
+- [Install Julia](https://docs.julialang.org/en/v1/manual/installation/)
 
-```bash
-julia
-```
-In the Julia REPL, import the required packages by running:
-```bash
-using Pkg
-Pkg.add("Symbolics")
-Pkg.add("LinearAlgebra")
-Pkg.add("Plots")
-Pkg.add("DifferentialEquations")
-Pkg.add("Interpolations")
-Pkg.add("JuMP")
-Pkg.add("Ipopt")
-exit()
+- Install the Julia extension in VSCode
+
+- From cmd prompt, clone this repository and navigate into to this folder:
+ ```bash
+git clone git@github.com:sherschm/RotaryInvertedPendulum.git
+cd RotaryInvertedPendulum
+code .
 ```
 
+- run src/main.jl from VSCode. The first time may take a while due to importing / precompiling several required Julia packages.
 ## To run the code from cmd prompt:
 Clone the repository and move to its directory.
 
-Run the script:
-
-```bash
-julia main.jl
-```
-
-This commented script runs through the model derivation and simulates LQR stabilisation control from some set of initial conditions: $[ \theta_1(t_0) \\ \theta_2(t_0) \\ \dot{\theta}_1(t_0) \\ \dot{\theta}_2(t_0)]$ :
+main.jl runs through the model derivation and simulates LQR stabilisation control from some set of initial conditions: $[ \theta_1(t_0) \\ \theta_2(t_0) \\ \dot{\theta}_1(t_0) \\ \dot{\theta}_2(t_0)]$ :
 
 <img src="./anims/rotary_pendulum_anim.gif" alt="response_gif" width="480"/> <img src="./plots/response.png" alt="pendulum response" width="350"/>
 
