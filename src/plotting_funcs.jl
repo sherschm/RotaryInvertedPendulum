@@ -61,3 +61,9 @@ function plot_energy(tvec,q_sol,qd_sol)
     plot(tvec,energy,xlabel="Time (s)",ylabel="Total system energy T+V (J)")
     savefig("plots//energy_plot")
 end
+
+
+#Plotting total energy can be a useful for model verification.
+    #If no damping or actuation, energy should be constant,
+    #   (or on the order of the ODE solver tolerance)
+#plot_energy(tvec,q_sol,qd_sol) 

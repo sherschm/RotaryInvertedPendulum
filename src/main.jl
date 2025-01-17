@@ -13,31 +13,7 @@ include("plotting_funcs.jl")
 include("modelling_funcs.jl")
 
 println("Creating model...")
-##define system parameters
-r=0.008 # L-bar radius (in m)
-m1=0.01 # L-bar horizontal section mass (in kg)
-m2=0.015 # L-bar vertical section length (in kg)
-l1=0.14 # L-bar horizontal section length (in m)
-l2=0.26 # L-bar vertical section length (in m)
-m=m1+m2 #total L-bar mass
-g=9.81 #gravity
-rc=[0;0.75*l1;-0.75*l2] #position of L-bar centre of mass, measured in body frame (see diagrams)
-
-#Inertia tensor of L-bar horizontal section measured in body frame (see diagrams)
-I1=[(1/4)*m1*r^2+(1/3)*m1*l1^2 0 0;0 (1/2)*m1*r^2 0;0 0 (1/4)*m1*r^2+(1/3)m1*l1^2] 
-#Inertia tensor of L-bar vertical section measured in body frame (see diagrams), using the parallel axis theorem
-I2=[(1/4)*m2*r^2+(1/12)*m2*l2^2 0 0;0 (1/4)*m2*r^2+(1/12)*m2*l2^2 0;0 0 0.5*m2*r^2]+m2*([0;l1;-l2/2]'*[0;l1;-l2/2]*I(3)-[0;l1;-l2/2]*[0;l1;-l2/2]')
-#Combined inertia tensor of L-bar, measured in body frame (see diagrams)
-Ip=I1+I2
-
-#Relevant rotation matrices
-Rz(θ)=[cos(θ) -sin(θ) 0;
-sin(θ) cos(θ) 0;
-0 0 1] 
-
-Ry(θ)=[cos(θ) 0 sin(θ);
-0 1 0;
--sin(θ) 0 cos(θ)] 
+include("parameters.jl")
 
 ##symbolic model derivation - using Julia's Symbolics.jl toolbox
 Symbolics.@variables t θ1(t) θ2(t) θ1d(t) θ2d(t) θ1dd(t) θ2dd(t) u(t)  ud(t)#instantiate symbolic coordinates and their velocities (and accelerations), 
@@ -93,6 +69,7 @@ rot_pend_dynamics=rot_pend_dynamics_sym(ctrl_input_type,M,N)
 x_equil= [0;pi;0;0]
 ndof=2
 
+
 ##SIMULATE LQR
 #Calculate Linearised dynamics
 A_f=eval(build_function(Symbolics.jacobian(rot_pend_dynamics,x),[x;u])[1])
@@ -100,24 +77,22 @@ B_f=eval(build_function(Symbolics.jacobian(rot_pend_dynamics,[u]),x)[1])
 
 A=A_f([x_equil;0])[1:2*ndof,1:2*ndof]
 B=B_f(x_equil)
-C=I(4) #[I(2) zeros(2,2)] #assume full observability
+C= [I(2) zeros(2,2)] #assume full observabilityI(4)
 D=0
 sys_cont=ss(A,B,C,D)
-
-#Simulate & animate!
-q0=[1;pi+0.1;0;0.0] # some initial conditions - these are: [θ1(t_0);θ2(t_0);θ2d(t_0)].
 
 Q=Diagonal([0.1,0.01,0.001,0.001]) 
 R=0.001 #weighting matrix
 K_opt=lqr(sys_cont, Q, R) #Optimal feedback gain matrix
 
-
 function u_f(x,t)
     ##acceleration control law
-    #acc=(-K_opt*(x-x_equil))[1] #if we want to control both angles
-    acc=(-K_opt*([0;(x-x_equil)[2:4]]))[1] #if we only care about θ2 stabilisation
-    
-    #simulate maximum acceleration limits
+
+    #LQR:
+    acc=(-K_opt*(x-x_equil))[1] #if we want to control both angles
+   # acc=(-K_opt*([0;(x-x_equil)[2:4]]))[1] #if we only care about θ2 stabilisation
+
+    #apply maximum acceleration limits
     max_acc=40 #rad/s
 
     if acc>=max_acc
@@ -130,7 +105,6 @@ function u_f(x,t)
 
     return acc_limited
 end
-
 
 #simulate!
 q0=[0.1;pi+0.1;0;0] #initial conditions - these are: [θ1(t_0);θ2(t_0);θ2d(t_0)].
@@ -172,8 +146,3 @@ plot(tvec,q_spin_up,label=["theta1" "theta2"],xlabel="Time (s)",ylabel="Angle (r
 savefig("plots//swing_up_traj")
 
 
-
-#Plotting total energy can be a useful for model verification.
-    #If no damping or actuation, energy should be constant,
-    #   (or on the order of the ODE solver tolerance)
-#plot_energy(tvec,q_sol,qd_sol) 

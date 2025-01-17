@@ -1,4 +1,14 @@
 
+#Relevant rotation matrices
+Rz(θ)=[cos(θ) -sin(θ) 0;
+sin(θ) cos(θ) 0;
+0 0 1] 
+
+Ry(θ)=[cos(θ) 0 sin(θ);
+0 1 0;
+-sin(θ) 0 cos(θ)] 
+
+
 function Lagrangian_dynamics(T,V)
 
   ##This calculates the terms of the equations of Motion & returns it in Symbolic form
@@ -68,7 +78,7 @@ function dynamics_vel_ctrl(M,N,u,ud)
   return M_stepper, N_stepper
 end
 
-function dynamics_acc_ctrl(M,N)
+function dynamics_acc_ctrl_terms(M,N)
   #Reduces the equations for the situation where velocity of θ1 is the control input.
 
   A=[1 0] #constraint
@@ -104,7 +114,7 @@ function rot_pend_dynamics_sym(ctrl_input_type,M,N)
 
   elseif ctrl_input_type=="acceleration"
     
-    M_a,N_a,B_a=dynamics_acc_ctrl(M,N)
+    M_a,N_a,B_a=dynamics_acc_ctrl_terms(M,N)
 
     #Define first order ODE form of dynamic model 
 
@@ -133,7 +143,7 @@ end
 function dynamics_acc_ctrl(x, p, t)
   θ=collect(x[1:2])
   θd=collect(x[3:4])
-  M_a, N_a, B_a = dynamics_acc_ctrl(M_f(θ...),N_f(x...))
+  M_a, N_a, B_a = dynamics_acc_ctrl_terms(M_f(θ...),N_f(x...))
 
 
   Fric2=0.0#-0.00005*x[3] # friction at the pendulum swing joint
