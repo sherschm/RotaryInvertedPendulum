@@ -15,7 +15,7 @@ The derivation of the dynamic model is detailed in [the pdf.](https://github.com
 
 - From cmd prompt, clone this repository and navigate into to this folder:
  ```bash
-git clone git@github.com:sherschm/RotaryInvertedPendulum.git
+git clone https://github.com/sherschm/RotaryInvertedPendulum.git
 cd RotaryInvertedPendulum
 code .
 ```
