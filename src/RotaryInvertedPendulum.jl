@@ -6,7 +6,10 @@ module RotaryInvertedPendulum
     using DifferentialEquations
     using Plots
     using Interpolations
-
+    using ControlSystems
+    using JuMP
+    using Ipopt
+    
     include("TrajOptim.jl")
     export  SpinUpTrajectory
 end # module RotaryInvertedPendulum
