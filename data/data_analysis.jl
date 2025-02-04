@@ -31,6 +31,8 @@ data=CSV.read("data/control_data_logs_example.csv",DataFrame)
 
 #select nice data range
 valid_i=6:size(data,1)-20
+#valid_i=size(data,1)-20:size(data,1)
+valid_i=1:size(data,1)
 
 t_delay=data.MessageRxTime[valid_i]-data.MessageTxTime[valid_i]
 

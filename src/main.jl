@@ -8,6 +8,7 @@ using DifferentialEquations
 using Plots
 using Interpolations
 using ControlSystems
+using DelimitedFiles
 
 include("plotting_funcs.jl")
 include("modelling_funcs.jl")
@@ -81,9 +82,12 @@ C= [I(2) zeros(2,2)] #assume full observabilityI(4)
 D=0
 sys_cont=ss(A,B,C,D)
 
+sys_discrete=c2d(sys_cont,0.1)
+
 Q=Diagonal([0.1,0.01,0.001,0.001]) 
 R=0.001 #weighting matrix
-K_opt=lqr(sys_cont, Q, R) #Optimal feedback gain matrix
+#K_opt=lqr(sys_cont, Q, R) #Optimal feedback gain matrix
+K_opt=lqr(sys_discrete, Q, R) #Optimal feedback gain matrix
 
 function u_f(x,t)
     ##acceleration control law
@@ -131,8 +135,8 @@ rot_pendulum_animator(q_sol,tvec;name="LQR_stabilisation")
 
 ##Calculate the spin-up trajectory!
 q0=[0.0;0.0;0;0] #initial conditions
-Δt=0.05 #trajectory time-step
-n_traj=120 #number of trajectory points
+Δt=0.02 #trajectory time-step
+n_traj=250 #number of trajectory points
 tmax=n_traj*Δt
 tvec=Δt:Δt:tmax
 cmd=[x_equil[1];x_equil[2]] #pendulum command position
@@ -146,3 +150,6 @@ plot(tvec,q_spin_up,label=["theta1" "theta2"],xlabel="Time (s)",ylabel="Angle (r
 savefig("plots//swing_up_traj")
 
 
+writedlm("data/swingup_pos_cmd.csv", [tvec q_spin_up[:,1]])
+writedlm("data/swingup_vel_cmd.csv", [tvec qd_spin_up[:,1]])
+writedlm("data/swingup_acc_cmd.csv", [tvec qdd_spin_up[:,1]])
