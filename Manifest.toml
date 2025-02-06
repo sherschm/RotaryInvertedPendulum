@@ -2,7 +2,7 @@
 
 julia_version = "1.11.3"
 manifest_format = "2.0"
-project_hash = "d3da8f88125f81f3c247d46ae7de3b4d9e2816ec"
+project_hash = "5cda745e9543c595cf4aea216e851ab412a51163"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "e1ce448a0d7f88168ffe2eeac4549c32d45a42d1"
@@ -267,6 +267,11 @@ weakdeps = ["SparseArrays"]
 
     [deps.ChainRulesCore.extensions]
     ChainRulesCoreSparseArraysExt = "SparseArrays"
+
+[[deps.ChirpSignal]]
+git-tree-sha1 = "43a9743cb8083fe3e55b5d58e6682820516bde80"
+uuid = "f60141a0-4cd3-11eb-3573-695a6f1942a1"
+version = "0.1.2"
 
 [[deps.CloseOpenIntervals]]
 deps = ["Static", "StaticArrayInterface"]

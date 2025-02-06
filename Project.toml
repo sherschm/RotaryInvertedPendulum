@@ -5,6 +5,7 @@ version = "0.1.0"
 
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
+ChirpSignal = "f60141a0-4cd3-11eb-3573-695a6f1942a1"
 ControlSystems = "a6e380b2-a6ca-5380-bf3e-84a91bcd477e"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 DifferentialEquations = "0c46a032-eb83-5123-abaf-570d42b7fbaa"
@@ -20,6 +21,7 @@ Symbolics = "0c5d862f-8b57-4792-8d23-62f2024744c7"
 
 [compat]
 CSV = "0.10.15"
+ChirpSignal = "0.1.2"
 ControlSystems = "1.10.5"
 DataFrames = "1.7.0"
 DifferentialEquations = "7.15.0"
