@@ -86,8 +86,14 @@ function SpinUpTrajectory(cmd,n_traj,Δt,q0,dynamic_funcs,T_f)
         JuMP.@constraint(model,Dyn_constr2(q[(j-1)*ndof+1:j*ndof]...,qd[(j-1)*ndof+1:j*ndof]...,qdd[(j-1)*ndof+1:j*ndof]...,torq[j]...)==0)
 
         # define motor velocity & acceleration constraints if you need
-        JuMP.@constraint(model,-0.4<=torq[j]<=0.4)
-        JuMP.@constraint(model,-10<=qdd[(j-1)*ndof+1]<=10)
+        #STEPPER
+        #JuMP.@constraint(model,-0.4<=torq[j]<=0.4)
+        #JuMP.@constraint(model,-10<=qdd[(j-1)*ndof+1]<=10)
+        
+        #Dynamixel Motor XM540-W270-T/R
+        JuMP.@constraint(model,-10.6<=torq[j]<=10.6)
+        #JuMP.@constraint(model,-10<=qdd[(j-1)*ndof+1]<=10)
+        JuMP.@constraint(model,-pi<=qd[(j-1)*ndof+1]<=pi)
 
         for i in 1:ndof
             if j>1

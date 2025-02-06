@@ -3,8 +3,8 @@
 r=0.008 # L-bar radius (in m)
 m1=0.01 # L-bar horizontal section mass (in kg)
 m2=0.015 # L-bar vertical section length (in kg)
-l1=0.14 # L-bar horizontal section length (in m)
-l2=0.26 # L-bar vertical section length (in m)
+l1=0.125 # L-bar horizontal section length (in m)
+l2=0.255 # L-bar vertical section length (in m)
 m=m1+m2 #total L-bar mass
 g=9.81 #gravity
 rc=[0;0.75*l1;-0.75*l2] #position of L-bar centre of mass, measured in body frame (see diagrams)
