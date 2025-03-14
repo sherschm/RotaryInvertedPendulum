@@ -35,5 +35,3 @@ Then, it generates a 'swing-up' trajectory to get the pendulum from $\theta_2=0$
 ## Next steps...
 - Update pendulum parameters.
 - clean up code.
-- Consider implementing a discrete time LQR if the control timestep is large.
-- Implement robust control?
