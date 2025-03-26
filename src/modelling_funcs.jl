@@ -39,7 +39,12 @@ function Lagrangian_dynamics(T,V)
   M[4]=Symbolics.coeff(Eq[2], θ2dd)
 
   # subtract mass matrix terms to find N vector (this is a vector describing the gravity and coriolis forces acting on/within the system)
-  N=simplify.(expand.(Eq-expand.(M*[θ1dd;θ2dd]))) 
+  N=simplify.(expand.(simplify.(expand.(Eq-expand.(M*[θ1dd;θ2dd]))) ))
+
+  for i in 1:length(N)
+    #subs3=Dict(θ1dd => 0, θ2dd => 0)
+    #N[i]=substitute(N[i], (subs3))
+  end
   return M, N
 end
 
@@ -48,7 +53,7 @@ function pend_sim(prob)
 
   #Simulates and makes animation of the rotary pendulum system
   println("Generating response...")
-  sol = solve(prob)#, reltol = 1e-5, abstol = 1e-5)#,Tsit5(), reltol=1e-8, abstol=1e-8)
+  sol = solve(prob, reltol = 1e-10, abstol = 1e-10)#,Tsit5(), reltol=1e-8, abstol=1e-8)
   tvec=sol.t
 
   #unpack solution
@@ -78,19 +83,22 @@ function dynamics_vel_ctrl(M,N,u,ud)
   return M_stepper, N_stepper
 end
 
-function dynamics_acc_ctrl_terms(M,N)
+function dynamics_acc_ctrl_terms(M,N,Damping_force)
   #Reduces the equations for the situation where velocity of θ1 is the control input.
 
   A=[1 0] #constraint
 
+  
+  #Fric2=-0.00005*x[4] # friction at the pendulum swing joint
+
   M_acc=M
-  N_acc=N-A'*inv(A*inv(M)*A')*A*inv(M)*N
+  N_acc=N+Damping_force-A'*inv(A*inv(M)*A')*A*inv(M)*(N+Damping_force)
   B_acc=A'*inv(A*inv(M)*A')
 
   return  M_acc, N_acc, B_acc
 end
 
-function rot_pend_dynamics_sym(ctrl_input_type,M,N)
+function rot_pend_dynamics_sym(ctrl_input_type,M,N,Damping)
   #This outputs the function that is integrated.
   #Slightly different depending on what the actual control input is
 
@@ -113,16 +121,17 @@ function rot_pend_dynamics_sym(ctrl_input_type,M,N)
    #return [x[3:4];inv(M(x[1:2]...))*([u+Fric1;Fric2]-N(x...))]
 
   elseif ctrl_input_type=="acceleration"
-    
-    M_a,N_a,B_a=dynamics_acc_ctrl_terms(M,N)
+
+    Damping_force=Damping*x[3:4]
+    M_a,N_a,B_a=dynamics_acc_ctrl_terms(M,N,Damping_force)
 
     #Define first order ODE form of dynamic model 
 
-    Fric2=0.0#-0.00005*x[3] # friction at the pendulum swing joint
+    #Fric2=-0.00005*x[4] # friction at the pendulum swing joint
   
     #return [x[3];x[4];ctrl_law(t);(Fric2-N_stepper_f([x[1];x[2];x[3];x[4]]))/M_stepper_f([x[1];x[2]])]
     #return [x[3];x[4];ctrl_law(x,t);(Fric2-N_stepper/M_stepper)]
-    return [x[3];x[4];inv(M_a)*(B_a*u-[0.0;Fric2]-N_a)]
+    return [x[3];x[4];inv(M_a)*(B_a*u-N_a)]
   elseif ctrl_input_type=="velocity"
 
     Symbolics.@variables u(t) ud(t)
@@ -143,10 +152,11 @@ end
 function dynamics_acc_ctrl(x, p, t)
   θ=collect(x[1:2])
   θd=collect(x[3:4])
-  M_a, N_a, B_a = dynamics_acc_ctrl_terms(M_f(θ...),N_f(x...))
+  Damping_force=Damping*θd
+  M_a, N_a, B_a = dynamics_acc_ctrl_terms(M_f(θ...),N_f(x...),Damping_force)
 
 
-  Fric2=0.0#-0.00005*x[3] # friction at the pendulum swing joint
-
-  return vec([θd;inv(M_a)*(B_a*u_f(x,t)-[0.0;Fric2]-N_a)])
+  #Fric2=-0.00005*x[4] # friction at the pendulum swing joint
+  
+  return vec([θd;inv(M_a)*(B_a*u_f(x,t)-N_a)])
 end

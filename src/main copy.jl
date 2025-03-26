@@ -23,31 +23,25 @@ x=[θ1;θ2;θ1d;θ2d]
 Dt = Differential(t) #time derivative operator
 
 # rotation matrix of the body with respect to the inertial frame: a yaw-pitch rotation
-R20=Ry(θ2)*Rz(θ1) 
+R02=Rz(θ1)*Ry(θ2)
 
 #calculate the time derivative of R20 (will be useful in calculating the velocity of the centre of mass).
-R20_dot=simplify.(expand_derivatives.(Dt.(R20,)))
+R02_dot=simplify.(expand_derivatives.(Dt.(R02,)))
 subs1=Dict(Dt(θ1,) => θ1d, Dt(θ2,) => θ2d)
-R20_dot=substitute(R20_dot, (subs1))
+R02_dot=substitute(R02_dot, (subs1))
 
-Ω=R20_dot*R20'
-
-ω=[Ω[3,2];Ω[1,3];Ω[2,1]]
 #angular velocity of body, with respect to inertial frame
-test=eval(build_function(Ω,x...)[1])
-
-
-test=eval(build_function(R20_dot'*rc,x...)[1])
+#ω= Rz(θ1)'*[0;θ2d;0]+[0;0;θ1d]
+#ω=[(R20'*R20_dot)[3,2];(R20'*R20_dot)[1,3];(R20'*R20_dot)[2,1]]
+ω=[(R02_dot*R02')[3,2];(R02_dot*R02')[1,3];(R02_dot*R02')[2,1]]
 
 #Rotational kinetic energy of pendulum L-bar
 T_rot=0.5*ω'*Ip*ω
 
 #velocity of centre of mass of pendulum L-bar
-#v_com=R02_dot*rc
-v_com=R20_dot'*rc
+v_com=R02_dot*rc
 
-v_com=-R20'*cross(ω,rc)
-
+#v_com=cross(ω,rc)
 v_com_f=eval(build_function(v_com, x...)[1])
 
 #Linear Kinetic energy of pendulum L-bar centre of mass
@@ -57,7 +51,7 @@ T_lin=0.5*m*v_com'*v_com
 T=T_rot+T_lin
 
 #Gravitational potential energy of pendulum L-bar
-V=m*g*(R20'*rc)[3]
+V=m*g*(R02*rc)[3]
 
 #create functions for calculating system energy at a given time
 T_f=eval(build_function(T, x...))
@@ -161,12 +155,12 @@ function u_f(x,t)
 
     #return acc
     return acc_limited
-   # return 0
+    #return 0
 end
 
 #simulate!
-q0=[-0.0;pi+0.1;0;0] #initial conditions - these are: [θ1(t_0);θ2(t_0);θ2d(t_0)].
-#q0=[0.0;pi/9;0;0] #initial conditions - these are: [θ1(t_0);θ2(t_0);θ2d(t_0)].
+q0=[-0.0;pi+0.01;0;0] #initial conditions - these are: [θ1(t_0);θ2(t_0);θ2d(t_0)].
+#q0=[0.0;pi/8;0;0] #initial conditions - these are: [θ1(t_0);θ2(t_0);θ2d(t_0)].
 tspan = (0.0, 10.0)
 prob = ODEProblem(dynamics_acc_ctrl, q0, tspan)
 
@@ -192,7 +186,7 @@ rot_pendulum_animator(q_sol,tvec;name="LQR_stabilisation")
 
 ##Calculate the spin-up trajectory!
 q0=[0.0;0.0;0;0] #initial conditions
-t_f=4
+t_f=2
 Δt=0.05 #trajectory time-step
 n_traj=Int(round(t_f/Δt)) #number of trajectory points
 

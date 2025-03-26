@@ -32,16 +32,21 @@ function SpinUpTrajectory(cmd,n_traj,Δt,q0,dynamic_funcs,T_f)
     JuMP.@variable(model,q[1:ndof*n_traj])
     JuMP.@variable(model,qd[1:ndof*n_traj] )
     JuMP.@variable(model,qdd[1:ndof*n_traj] )
+    JuMP.@variable(model,qddd[1:n_traj] ) #motor jerk! limiting this smoothes the acceleration command
+
     JuMP.@variable(model,torq[1:n_traj] )
 
     function objective_func(x_in::T...) where T
         #Objective function: to minimise the kinetic energy throughout the trajectory
         q_in=collect(x_in[1:n_traj*ndof])
         qd_in=collect(x_in[n_traj*ndof.+(1:n_traj*ndof)])
+        u_in=collect(x_in[2*n_traj*ndof.+(1:n_traj)])
 
         T_err=sum((Δt/2)*(T_f(q_in[(j-1)*ndof+1:j*ndof]...,qd_in[(j-1)*ndof+1:j*ndof]...)+T_f(q_in[(j)*ndof+1:(j+1)*ndof]...,qd_in[(j)*ndof+1:(j+1)*ndof]...)) for j in 1:n_traj-1)
 
-        Objective = T_err
+        #effort=sum(u_in[j]^2 for j in 1:n_traj-1)
+
+        Objective = T_err#effort#
         return T.(Objective)
     end
 
@@ -87,16 +92,17 @@ function SpinUpTrajectory(cmd,n_traj,Δt,q0,dynamic_funcs,T_f)
 
         # define motor velocity & acceleration constraints if you need
         #STEPPER
-        #JuMP.@constraint(model,-0.4<=torq[j]<=0.4)
-        #JuMP.@constraint(model,-10<=qdd[(j-1)*ndof+1]<=10)
-        
-        #Dynamixel Motor XM540-W270-T/R
-        JuMP.@constraint(model,-10.6<=torq[j]<=10.6)
-        #JuMP.@constraint(model,-10<=qdd[(j-1)*ndof+1]<=10)
-        JuMP.@constraint(model,-pi<=qd[(j-1)*ndof+1]<=pi)
+        JuMP.@constraint(model,-0.4<=torq[j]<=0.4)
+        JuMP.@constraint(model,-200<=qdd[(j-1)*ndof+1]<=200)
 
-        for i in 1:ndof
-            if j>1
+        JuMP.@constraint(model,-500<=qddd[j]<=500)
+        #Dynamixel Motor XM540-W270-T/R
+       # JuMP.@constraint(model,-10.6<=torq[j]<=10.6)
+        #JuMP.@constraint(model,-10<=qdd[(j-1)*ndof+1]<=10)
+        #JuMP.@constraint(model,-pi<=qd[(j-1)*ndof+1]<=pi)
+        if j>1
+            JuMP.@constraint(model, 0.5*(qddd[j]+qddd[j-1])*Δt == qdd[1+(j-1)*ndof]-qdd[1+(j-2)*ndof])
+            for i in 1:ndof
                 #Trapezoidal rule
                 JuMP.@constraint(model, 0.5*(qd[i+(j-1)*ndof]+qd[i+(j-2)*ndof])*Δt == q[i+(j-1)*ndof]-q[i+(j-2)*ndof])
                 JuMP.@constraint(model, 0.5*(qdd[i+(j-1)*ndof]+qdd[i+(j-2)*ndof])*Δt == qd[i+(j-1)*ndof]-qd[i+(j-2)*ndof])
@@ -112,10 +118,11 @@ function SpinUpTrajectory(cmd,n_traj,Δt,q0,dynamic_funcs,T_f)
     q_opt_val = reshape(JuMP.value.(q), (ndof, n_traj))'
     qd_opt_val = reshape(JuMP.value.(qd), (ndof, n_traj))'
     qdd_opt_val = reshape(JuMP.value.(qdd), (ndof, n_traj))'
+    qddd_opt_val = JuMP.value.(qddd)
     torq_opt=JuMP.value.(torq)
 
     #tvec=Δt:Δt:n_traj*Δt
 
     #output trajectory position, velocity, acceleration and motor torque profiles
-    return q_opt_val, qd_opt_val, qdd_opt_val, torq_opt
+    return q_opt_val, qd_opt_val, qdd_opt_val,qddd_opt_val, torq_opt
 end
