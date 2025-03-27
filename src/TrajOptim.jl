@@ -44,9 +44,9 @@ function SpinUpTrajectory(cmd,n_traj,Δt,q0,dynamic_funcs,T_f)
 
         T_err=sum((Δt/2)*(T_f(q_in[(j-1)*ndof+1:j*ndof]...,qd_in[(j-1)*ndof+1:j*ndof]...)+T_f(q_in[(j)*ndof+1:(j+1)*ndof]...,qd_in[(j)*ndof+1:(j+1)*ndof]...)) for j in 1:n_traj-1)
 
-        #effort=sum(u_in[j]^2 for j in 1:n_traj-1)
+        effort=sum(u_in[j]^2 for j in 1:n_traj-1)
 
-        Objective = T_err#effort#
+        Objective = T_err#+effort#
         return T.(Objective)
     end
 
@@ -93,7 +93,7 @@ function SpinUpTrajectory(cmd,n_traj,Δt,q0,dynamic_funcs,T_f)
         # define motor velocity & acceleration constraints if you need
         #STEPPER
         JuMP.@constraint(model,-0.4<=torq[j]<=0.4)
-        JuMP.@constraint(model,-200<=qdd[(j-1)*ndof+1]<=200)
+        JuMP.@constraint(model,-20<=qdd[(j-1)*ndof+1]<=20)
 
         JuMP.@constraint(model,-500<=qddd[j]<=500)
         #Dynamixel Motor XM540-W270-T/R

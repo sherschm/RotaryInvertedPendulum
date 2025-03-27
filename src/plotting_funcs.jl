@@ -54,6 +54,43 @@ function rot_pendulum_animator(x_sol,tvec;name="rotary_pendulum_anim")
     gif(anim,"anims//"*name*".gif",fps=anim_fps);
 end
 
+using Statistics
+using FFTW
+function plot_FFT(sig_in,tvec_in,file_name="spectrum")
+
+  
+    Δt_FFT=0.005
+    Fs=1/Δt_FFT
+    tvec_FFT=Δt_FFT:Δt_FFT:maximum(tvec_in)
+    N=length(tvec_FFT)
+
+    sig_interped=general_lin_interp(sig_in,tvec_in,tvec_FFT)
+
+    sig=sig_interped.-mean(sig_interped)
+    Y = fft(sig)
+    #Y = fft(df.force_y)
+    # Compute frequency vector
+    frequencies = Fs * (0:(N ÷ 2 - 1)) / N
+
+    # Compute the amplitude spectrum (single-sided)
+    amplitude_spectrum = 2 * abs.(Y[1:N ÷ 2]) / N
+
+    #find resonant peak
+   #
+   sorted_indices = sortperm(amplitude_spectrum, rev=true)
+    println("fundamental_freq = "* string(frequencies[sorted_indices[1]]))
+
+    fundamental_freq=frequencies[findfirst(item -> item == maximum(amplitude_spectrum),amplitude_spectrum)]
+
+    # Plot the frequency spectrum
+    plot(frequencies, amplitude_spectrum, xlabel="Frequency (Hz)", ylabel="Amplitude", title="Frequency Spectrum", legend=false,xlims=(0,10))
+    #plot!([1.396;1.396],[0;maximum(amplitude_spectrum)],label="Observed Frequency")
+    savefig("plots/"*file_name*".png")
+
+    #writedlm("FFT_order-3.csv", [vec(frequencies) vec(amplitude_spectrum)], ',')
+    return fundamental_freq 
+end
+
 function plot_energy(tvec,q_sol,qd_sol)
     n=length(tvec)
     energy=zeros(n)
