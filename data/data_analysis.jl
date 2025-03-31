@@ -30,7 +30,7 @@ function correct_encoder_vector(raw_values::Vector{Int}, max_value::Int=65535)
 end
 
 #
-data=CSV.read("C:\\Downloads\\500hz_SwingUp_Response.csv",DataFrame)
+data=CSV.read("C:\\Downloads\\test_result.csv",DataFrame)
 data=data[2:end,:]
 #data=CSV.read("data/control_data_logs_example.csv",DataFrame)
 
@@ -101,8 +101,8 @@ savefig("plots/swing_up_acc")
 plot(tvec,acc_cmd,xlabel="Time (s)",ylabel="Acceleration (rad/s^2)")
 
 
-plot(p1,p2,layout=(2,1))
+#plot(p1,p2,layout=(2,1))
 
-θ1_vec[acc_ctrl_idxs]
+#θ1_vec[acc_ctrl_idxs]
 
 

@@ -84,7 +84,7 @@ rot_pendulum_animator(q_sol,tvec,plot_params;name="LQR_stabilisation")
 
 ##Calculate the spin-up trajectory!
 q0=[0.0;0.0;0;0] #initial conditions
-t_f=4
+t_f=7
 Δt=0.005 #trajectory time-step
 n_traj=Int(round(t_f/Δt)) #number of trajectory points
 

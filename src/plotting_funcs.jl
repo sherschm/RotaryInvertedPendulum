@@ -10,10 +10,6 @@ function plot_rot_pendulum(q,plot_params)
     l1,l2=plot_params
     coords=[zeros(3,1) L1_tip_pos(q[1],l1) L2_tip_pos(q[1],q[2],l1,l2)]
 
-    #x_coords=[0;L1_tip_pos(q[1])[1];L2_tip_pos(q[1],q[2])[1]]
-    #y_coords=[0;L1_tip_pos(q[1])[2];L2_tip_pos(q[1],q[2])[2]]
-    #z_coords=[0;L1_tip_pos(q[1])[3];L2_tip_pos(q[1],q[2])[3]]
-
     plot(coords[1,:],coords[2,:],coords[3,:],
     aspect_ratio=:equal,
     xlims=(-0.3,0.3),ylims=(-0.3,0.3),zlims=(-0.3,0.3),
@@ -24,6 +20,7 @@ end
 
 function plot_rot_pendulum(q,i,Δt,plot_params)
     l1,l2=plot_params
+    
     coords=[zeros(3,1) L1_tip_pos(q[1],l1) L2_tip_pos(q[1],q[2],l1,l2)]
 
     plot(coords[1,:],coords[2,:],coords[3,:],

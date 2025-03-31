@@ -23,6 +23,7 @@ end
 
 function SpinUpTrajectory(cmd,n_traj,Δt,q0,dynamic_funcs,T_f)
     M_f, N_f=dynamic_funcs
+    Damping=0.0002
 
     tvec=Δt:Δt:Δt*n_traj
 
@@ -62,8 +63,10 @@ function SpinUpTrajectory(cmd,n_traj,Δt,q0,dynamic_funcs,T_f)
         qdd_in=collect(vars[2*ndof+1:3*ndof])
         F_in=collect(vars[3*ndof+1])
 
+        D=[0 0;0 Damping] #damping matrix
+
         #This expression must equal zeros in the optimisation solution.
-        dynamic_err = M_f(q_in...)*qdd_in +N_f(q_in...,qd_in...)-[F_in;0]+[0 0;0 Damping]*θd
+        dynamic_err = M_f(q_in...)*qdd_in +N_f(q_in...,qd_in...)-[F_in;0]+D*qd_in
      return T.(dynamic_err)
     end
 
@@ -92,16 +95,12 @@ function SpinUpTrajectory(cmd,n_traj,Δt,q0,dynamic_funcs,T_f)
         JuMP.@constraint(model,Dyn_constr1(q[(j-1)*ndof+1:j*ndof]...,qd[(j-1)*ndof+1:j*ndof]...,qdd[(j-1)*ndof+1:j*ndof]...,torq[j]...)==0)
         JuMP.@constraint(model,Dyn_constr2(q[(j-1)*ndof+1:j*ndof]...,qd[(j-1)*ndof+1:j*ndof]...,qdd[(j-1)*ndof+1:j*ndof]...,torq[j]...)==0)
 
-        # define motor velocity & acceleration constraints if you need
+        # define motor constraints if you need
         #STEPPER
-        JuMP.@constraint(model,-0.4<=torq[j]<=0.4)
-        JuMP.@constraint(model,-20<=qdd[(j-1)*ndof+1]<=20)
+        JuMP.@constraint(model,-0.4<=torq[j]<=0.4) 
+        JuMP.@constraint(model,-20<=qdd[(j-1)*ndof+1]<=20) #acceleration constraints
+        JuMP.@constraint(model,-200<=qddd[j]<=200) #jerk constraints
 
-        JuMP.@constraint(model,-200<=qddd[j]<=200)
-        #Dynamixel Motor XM540-W270-T/R
-       # JuMP.@constraint(model,-10.6<=torq[j]<=10.6)
-        #JuMP.@constraint(model,-10<=qdd[(j-1)*ndof+1]<=10)
-        #JuMP.@constraint(model,-pi<=qd[(j-1)*ndof+1]<=pi)
         if j>1
             JuMP.@constraint(model, 0.5*(qddd[j]+qddd[j-1])*Δt == qdd[1+(j-1)*ndof]-qdd[1+(j-2)*ndof])
             for i in 1:ndof
