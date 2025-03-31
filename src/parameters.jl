@@ -1,9 +1,8 @@
 
 ##define system parameters
 r=0.004 # L-bar radius (in m)
-#ri=0.00327
 ri=0.0032
-
+x_equil= [0;pi;0;0]
 dens_Al=2700
 #dens_Al=1000
 dens_per_m=dens_Al*pi*(r^2-ri^2)
@@ -33,8 +32,7 @@ g=9.81 #gravity
 
 rc=Float16.((1/(m))*(m1*[0;l1/2;0]+m2*[0;l1;-l2/2]+m_tip*[0;l1;-l2]))
 
-#rc=[0;CoM_y;CoM_z] #position of L-bar centre of mass, measured in body frame (see diagrams)
-Damping = [0 0;0 0.0002]
+Damping = 0.0002#[0 0;0 0.0002]
 
 function I_tube(r1,r2,h,mi,offset,axis)
     
@@ -63,16 +61,9 @@ function I_tube(r1,r2,h,mi,offset,axis)
 end
 
 #Inertia tensor of L-bar horizontal section measured in body frame (see diagrams)
-#I1=[(1/4)*m1*r^2+(1/3)*m1*l1^2 0 0;0 (1/2)*m1*r^2 0;0 0 (1/4)*m1*r^2+(1/3)m1*l1^2] 
-#Inertia tensor of L-bar vertical section measured in body frame (see diagrams), using the parallel axis theorem
-#I2=[(1/4)*m2*r^2+(1/12)*m2*l2^2 0 0;0 (1/4)*m2*r^2+(1/12)*m2*l2^2 0;0 0 0.5*m2*r^2]+m2*([0;l1;-l2/2]'*[0;l1;-l2/2]*I(3)-[0;l1;-l2/2]*[0;l1;-l2/2]')
-#Combined inertia tensor of L-bar, measured in body frame (see diagrams)
-#Ip=I1+I2
 I1=I_tube(r,ri,l1,m1,[0;l1/2;0],"y")#
 I2=I_tube(r,ri,l2,m2,[0;l1;-l2/2],"z")
 Irotor=Diagonal([0;3.5*10^-6;0])
-#I1=I_tube(r,ri,l1,m1,[0;0;0],"y")
-#I2=I_tube(r,ri,l2,m2,[0;l1;0],"z")
 
 I3=m_tip*Diagonal([0;l1^2;l2^2])
 
@@ -83,5 +74,6 @@ Ip=Float16.(I1+I2+I3)*0.85
 
 observed_freq=9/7.4625
 
+dyn_params=(rc,m,Ip,g,Damping)
 #Ip=Ip/10
 #Ip=zeros(3,3)

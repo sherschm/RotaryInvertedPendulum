@@ -57,11 +57,14 @@ x_equil= [0;pi;0;0]
 ndof=2
 
 #Calculate Linearised dynamics
-A_f=eval(build_function(Symbolics.jacobian(rot_pend_dynamics,x),[x;u])[1])
-B_f=eval(build_function(Symbolics.jacobian(rot_pend_dynamics,[u]),x)[1])
+A_sym = Symbolics.jacobian(rot_pend_dynamics, x)
+subs_dict = Dict(vcat(x .=> x_equil, u => 0))
+A = Float64.(Symbolics.substitute(A_sym, subs_dict)[1:2*ndof, 1:2*ndof])
 
-A=A_f([x_equil;0])[1:2*ndof,1:2*ndof]
-B=B_f(x_equil)
-C= [I(2) zeros(2,2)] #assume full observabilityI(4)
+B_sym = Symbolics.jacobian(rot_pend_dynamics, [u])
+B = Float64.(Symbolics.substitute(B_sym, subs_dict))
+
+C= I(4)#  #assume full observability [I(2) zeros(2,2)]
 D=0
+
 sys_cont=ss(A,B,C,D)

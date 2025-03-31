@@ -8,13 +8,19 @@ Ry(θ)=[cos(θ) 0 sin(θ);
 0 1 0;
 -sin(θ) 0 cos(θ)] 
 
+calc_R20(θ1,θ2)=Ry(θ2)*Rz(θ1) 
 
-function Lagrangian_dynamics(T,V)
+function Lagrangian_dynamics(T,V,vars)
 
   ##This calculates the terms of the equations of Motion & returns it in Symbolic form
+  (t, θ1, θ2, θ1d, θ2d, θ1dd, θ2dd, u)=vars
+
+  Symbolics.@variables t
+  Dt = Differential(t) #time derivative operator
 
   #System Lagrangian
   L=T-V
+
   #Derive Symbolic Lagrangian Equations of Motion 
   Dθ1 = Differential(θ1) #derivative operator
   Dθ2 = Differential(θ2) #derivative operator
@@ -98,7 +104,8 @@ function rot_pend_dynamics_sym(ctrl_input_type,M,N,Damping)
   Symbolics.@variables t θ1(t) θ2(t) θ1d(t) θ2d(t) θ1dd(t) θ2dd(t) u(t)
 
   x=[θ1;θ2;θ1d;θ2d]
-
+  D=[0 0;0 Damping]
+  
   if ctrl_input_type=="torque"
 
     ## put dynamics in this form: xdot=f(x,u)
@@ -115,7 +122,8 @@ function rot_pend_dynamics_sym(ctrl_input_type,M,N,Damping)
 
   elseif ctrl_input_type=="acceleration"
 
-    Damping_force=Damping*x[3:4]
+    
+    Damping_force=D*x[3:4]
     M_a,N_a,B_a=dynamics_acc_ctrl_terms(M,N,Damping_force)
 
     #Define first order ODE form of dynamic model 
@@ -141,28 +149,20 @@ function rot_pend_dynamics_sym(ctrl_input_type,M,N,Damping)
 end
 
 
-# ODE function for DifferentialEquations.jl
-function dynamics_acc_ctrl(x, p, t)
-  θ=collect(x[1:2])
-  θd=collect(x[3:4])
-  
-  Damping_force=Damping*θd
-
-  M_a, N_a, B_a = dynamics_acc_ctrl_terms(M_f(θ...),N_f(x...),Damping_force)
-  
-  return vec([θd;inv(M_a)*(B_a*u_f(x,t)-N_a)])
-end
 
 
-function generate_dynamics()
+function generate_dynamics(dyn_params,x_equil)
+  rc,m,Ip,g,Damping=dyn_params
+
   ##symbolic model derivation - using Julia's Symbolics.jl toolbox
-  Symbolics.@variables t θ1(t) θ2(t) θ1d(t) θ2d(t) θ1dd(t) θ2dd(t) u(t)  ud(t)#instantiate symbolic coordinates and their velocities (and accelerations), 
+  Symbolics.@variables t θ1(t) θ2(t) θ1d(t) θ2d(t) θ1dd(t) θ2dd(t) u(t)#instantiate symbolic coordinates and their velocities (and accelerations), 
+  vars=(t, θ1, θ2, θ1d, θ2d, θ1dd, θ2dd, u)
   x=[θ1;θ2;θ1d;θ2d]
 
   Dt = Differential(t) #time derivative operator
 
   # rotation matrix of the body with respect to the inertial frame: a yaw-pitch rotation
-  R20=Ry(θ2)*Rz(θ1) 
+  R20=calc_R20(θ1,θ2)
 
   #calculate the time derivative of R20 (will be useful in calculating the velocity of the centre of mass).
   R20_dot=simplify.(expand_derivatives.(Dt.(R20,)))
@@ -193,31 +193,29 @@ function generate_dynamics()
   Total_energy(x)=T_f(x...)+V_f(x...)
 
   #generate Lagrangian model matrices / vectors
-  M,N=Lagrangian_dynamics(T,V)
+  M,N=Lagrangian_dynamics(T,V,vars)
 
   ##Convert symbolic terms M and N into Julia functions
   M_f=eval(build_function(M, [θ1, θ2]...)[1])
   N_f=eval(build_function(N, x...)[1])
-  dynamic_funcs=(M_f,N_f)
-
-  M_jac=Symbolics.jacobian(M,[θ1, θ2])
-  N_jac=Symbolics.jacobian(N,x)
 
   ctrl_input_type="acceleration"#"torque"#
 
-  Damping = [0 0;0 0]#0.0001]
-
   rot_pend_dynamics=rot_pend_dynamics_sym(ctrl_input_type,M,N,Damping)
-  x_equil= [0;pi;0;0]
   ndof=2
 
   #Calculate Linearised dynamics
-  A_f=eval(build_function(Symbolics.jacobian(rot_pend_dynamics,x),[x;u])[1])
-  B_f=eval(build_function(Symbolics.jacobian(rot_pend_dynamics,[u]),x)[1])
+  A_sym = Symbolics.jacobian(rot_pend_dynamics, x)
+  subs_dict = Dict(vcat(x .=> x_equil, u => 0))
+  A = Float64.(Symbolics.substitute(A_sym, subs_dict)[1:2*ndof, 1:2*ndof])
 
-  A=A_f([x_equil;0])[1:2*ndof,1:2*ndof]
-  B=B_f(x_equil)
-  C= [I(2) zeros(2,2)] #assume full observabilityI(4)
+  B_sym = Symbolics.jacobian(rot_pend_dynamics, [u])
+  B = Float64.(Symbolics.substitute(B_sym, subs_dict))
+
+  C= I(4)#  #assume full observability [I(2) zeros(2,2)]
   D=0
-  sys_cont=ss(A,B,C,D)
+
+  linearised_sys_cont=ss(A,B,C,D)
+
+  return (M,N,M_f,N_f), linearised_sys_cont, Total_energy, T_f,V_f 
 end

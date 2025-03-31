@@ -1,13 +1,20 @@
 
+using Statistics
+using FFTW
 
-#L1_tip_pos(θ_1)=Rz(θ_1)*[0;l1;0]
-#L2_tip_pos(θ_1,θ_2)=Symbolics.value.(substitute(R02,Dict([θ1 => θ_1, θ2 => θ_2])))*[0;l1;-l2]
+L1_tip_pos(θ1,l1)=Rz(θ1)'*[0;l1;0]
+L2_tip_pos(θ1,θ2,l1,l2)=calc_R20(θ1,θ2)'*[0;l1;-l2]
 
-L1_tip_pos(θ_1)=Rz(θ_1)'*[0;l1;0]
-L2_tip_pos(θ_1,θ_2)=Symbolics.value.(substitute(R20,Dict([θ1 => θ_1, θ2 => θ_2])))'*[0;l1;-l2]
+function plot_rot_pendulum(q,plot_params)
 
-function plot_rot_pendulum(q)
-    plot([0;L1_tip_pos(q[1])[1];L2_tip_pos(q[1],q[2])[1]],[0;L1_tip_pos(q[1])[2];L2_tip_pos(q[1],q[2])[2]],[0;L1_tip_pos(q[1])[3];L2_tip_pos(q[1],q[2])[3]],
+    l1,l2=plot_params
+    coords=[zeros(3,1) L1_tip_pos(q[1],l1) L2_tip_pos(q[1],q[2],l1,l2)]
+
+    #x_coords=[0;L1_tip_pos(q[1])[1];L2_tip_pos(q[1],q[2])[1]]
+    #y_coords=[0;L1_tip_pos(q[1])[2];L2_tip_pos(q[1],q[2])[2]]
+    #z_coords=[0;L1_tip_pos(q[1])[3];L2_tip_pos(q[1],q[2])[3]]
+
+    plot(coords[1,:],coords[2,:],coords[3,:],
     aspect_ratio=:equal,
     xlims=(-0.3,0.3),ylims=(-0.3,0.3),zlims=(-0.3,0.3),
     label=false,
@@ -15,8 +22,11 @@ function plot_rot_pendulum(q)
     #plot([0;L1_tip_pos(q[1])[1];L2_tip_pos(q[1],q[2])[1]],[0;L1_tip_pos(q[1])[2];L2_tip_pos(q[1],q[2])[2]],aspect_ratio=:equal,xlims=(-0.15,0.15),ylims=(-0.15,0.15))
 end
 
-function plot_rot_pendulum(q,i,Δt)
-    plot([0;L1_tip_pos(q[1])[1];L2_tip_pos(q[1],q[2])[1]],[0;L1_tip_pos(q[1])[2];L2_tip_pos(q[1],q[2])[2]],[0;L1_tip_pos(q[1])[3];L2_tip_pos(q[1],q[2])[3]],
+function plot_rot_pendulum(q,i,Δt,plot_params)
+    l1,l2=plot_params
+    coords=[zeros(3,1) L1_tip_pos(q[1],l1) L2_tip_pos(q[1],q[2],l1,l2)]
+
+    plot(coords[1,:],coords[2,:],coords[3,:],
     aspect_ratio=:equal,
     xlims=(-0.3,0.3),ylims=(-0.3,0.3),zlims=(-0.3,0.3),
     label=false,
@@ -37,7 +47,7 @@ function general_lin_interp(dataset,tvec,tvec_new)
     return interped_data
 end
   
-function rot_pendulum_animator(x_sol,tvec;name="rotary_pendulum_anim")
+function rot_pendulum_animator(x_sol,tvec,plot_params;name="rotary_pendulum_anim")
     #pendulum animation creation
     println("Creating animation...")
     anim_fps=20
@@ -47,15 +57,14 @@ function rot_pendulum_animator(x_sol,tvec;name="rotary_pendulum_anim")
 
     anim = @animate for i in 1:length(tvec_anim)
         plot()
-        plot_rot_pendulum(x_anim[i,:],i,1/anim_fps)
+        plot_rot_pendulum(x_anim[i,:],i,1/anim_fps,plot_params)
         plot!(label=string(i/anim_fps))
     end
 
     gif(anim,"anims//"*name*".gif",fps=anim_fps);
 end
 
-using Statistics
-using FFTW
+
 function plot_FFT(sig_in,tvec_in,file_name="spectrum")
 
   

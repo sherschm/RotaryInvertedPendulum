@@ -1,4 +1,5 @@
 using JuMP, Ipopt
+using DelimitedFiles
 
 function memoize(foo::Function, n_outputs::Int)
   last_x, last_f = nothing, nothing
@@ -22,6 +23,8 @@ end
 
 function SpinUpTrajectory(cmd,n_traj,Δt,q0,dynamic_funcs,T_f)
     M_f, N_f=dynamic_funcs
+
+    tvec=Δt:Δt:Δt*n_traj
 
     println("Building swing-up trajectory optimisation problem...")
     ndof=2
@@ -121,7 +124,28 @@ function SpinUpTrajectory(cmd,n_traj,Δt,q0,dynamic_funcs,T_f)
     qddd_opt_val = JuMP.value.(qddd)
     torq_opt=JuMP.value.(torq)
 
-    #tvec=Δt:Δt:n_traj*Δt
+    #plot the response of the generalised coordinates
+    plot(tvec,q_opt_val,label=["theta1" "theta2"],xlabel="Time (s)",ylabel="Angle (rad)")
+    savefig("plots//swing_up_plots//swing_up_traj")
+
+    plot(tvec,torq_opt,xlabel="Time (s)",ylabel="Expected Torque (Nm)")
+    savefig("plots//swing_up_plots//swing_up_torque")
+
+    plot(tvec,qd_opt_val,label=["theta1" "theta2"],xlabel="Time (s)",ylabel="Velocity (rad/s)")
+    savefig("plots//swing_up_plots//swing_up_velocity")
+
+    plot(tvec,qdd_opt_val,label=["theta1" "theta2"],xlabel="Time (s)",ylabel="Acceleration (rad/s^2)")
+    savefig("plots//swing_up_plots//swing_up_accel")
+
+    plot(tvec,qddd_opt_val,label=false,xlabel="Time (s)",ylabel="Motor Jerk (rad/s^3)")
+    savefig("plots//swing_up_plots//swing_up_jerk")
+
+    encoder_steps_per_rad=pi/1200
+
+    writedlm("data/swing_up/swingup_pos_cmd.csv", [tvec q_opt_val[:,1]])
+    writedlm("data/swing_up/swingup_vel_cmd.csv", [tvec qd_opt_val[:,1]])
+    writedlm("data/swing_up/swingup_acc_cmd.csv", [Float32.(tvec) Float32.(qdd_opt_val[:,1]/encoder_steps_per_rad)])
+
 
     #output trajectory position, velocity, acceleration and motor torque profiles
     return q_opt_val, qd_opt_val, qdd_opt_val,qddd_opt_val, torq_opt
