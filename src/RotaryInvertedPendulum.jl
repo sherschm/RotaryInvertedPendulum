@@ -11,7 +11,7 @@ module RotaryInvertedPendulum
     using Ipopt
     using Statistics
     include("modelling_funcs.jl")
-    export generate_dynamics, dynamics_acc_ctrl, pend_sim,dynamics_acc_ctrl_terms
+    export generate_dynamics, dynamics_acc_ctrl, pend_sim,dynamics_acc_ctrl_terms, Ry, Rz, calc_R20
 
     include("plotting_funcs.jl")
     export plot_FFT, rot_pendulum_animator, plot_rot_pendulum, general_lin_interp

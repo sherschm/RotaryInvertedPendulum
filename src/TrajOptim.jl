@@ -63,8 +63,7 @@ function SpinUpTrajectory(cmd,n_traj,Δt,q0,dynamic_funcs,T_f)
         F_in=collect(vars[3*ndof+1])
 
         #This expression must equal zeros in the optimisation solution.
-        dynamic_err = M_f(q_in...)*qdd_in +N_f(q_in...,qd_in...)-[F_in;0]#+damping if used
-
+        dynamic_err = M_f(q_in...)*qdd_in +N_f(q_in...,qd_in...)-[F_in;0]+[0 0;0 Damping]*θd
      return T.(dynamic_err)
     end
 
@@ -98,7 +97,7 @@ function SpinUpTrajectory(cmd,n_traj,Δt,q0,dynamic_funcs,T_f)
         JuMP.@constraint(model,-0.4<=torq[j]<=0.4)
         JuMP.@constraint(model,-20<=qdd[(j-1)*ndof+1]<=20)
 
-        JuMP.@constraint(model,-500<=qddd[j]<=500)
+        JuMP.@constraint(model,-200<=qddd[j]<=200)
         #Dynamixel Motor XM540-W270-T/R
        # JuMP.@constraint(model,-10.6<=torq[j]<=10.6)
         #JuMP.@constraint(model,-10<=qdd[(j-1)*ndof+1]<=10)
@@ -142,9 +141,9 @@ function SpinUpTrajectory(cmd,n_traj,Δt,q0,dynamic_funcs,T_f)
 
     encoder_steps_per_rad=pi/1200
 
-    writedlm("data/swing_up/swingup_pos_cmd.csv", [tvec q_opt_val[:,1]])
-    writedlm("data/swing_up/swingup_vel_cmd.csv", [tvec qd_opt_val[:,1]])
-    writedlm("data/swing_up/swingup_acc_cmd.csv", [Float32.(tvec) Float32.(qdd_opt_val[:,1]/encoder_steps_per_rad)])
+    writedlm("data/swing_up/swingup_pos.csv", [tvec q_opt_val],",")
+    writedlm("data/swing_up/swingup_vel.csv", [tvec qd_opt_val],",")
+    writedlm("data/swing_up/swingup_acc_cmd.csv", [Float32.(tvec) Float32.(qdd_opt_val[:,1]/encoder_steps_per_rad)],",")
 
 
     #output trajectory position, velocity, acceleration and motor torque profiles
