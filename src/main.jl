@@ -1,11 +1,8 @@
 using RotaryInvertedPendulum
-#using Symbolics
 using LinearAlgebra
 using DifferentialEquations
 using Plots
-#using Interpolations
 using ControlSystems
-#using DelimitedFiles
 
 #create model
 include("parameters.jl")
@@ -24,7 +21,6 @@ R=0.01
 #calculate LQR gains
 K_opt=lqr(sys_discrete, Q, R) #Optimal feedback gain matrix
 #K_opt=[-1.00 174.58 -2.01 22.95]
-#K_opt=[65 -1500 -0.12 -20]
 
 function u_f(x,t)
     # Acceleration control law using LQR
@@ -44,14 +40,13 @@ function dynamics_acc_ctrl(x, p, t)
     θd=collect(x[3:4])
     
     Damping=p[1]
-    D=[0 0;0 Damping]
+    D=[0 0;0 -Damping]
     Damping_force=D*θd
   
     M_a, N_a, B_a = dynamics_acc_ctrl_terms(M_f(θ...),N_f(x...),Damping_force)
     
     return vec([θd;inv(M_a)*(B_a*u_f(x,t)-N_a)])
 end
-
 
 #simulate!
 q0=[0.1;pi+0.2;0;0] #initial conditions - these are: [θ1(t_0);θ2(t_0);θ2d(t_0)].
@@ -85,7 +80,7 @@ rot_pendulum_animator(q_sol,tvec,plot_params;name="LQR_stabilisation")
 ##Calculate the spin-up trajectory!
 q0=[0.0;0.0;0;0] #initial conditions
 t_f=7
-Δt=0.005 #trajectory time-step
+Δt=0.01 #trajectory time-step
 n_traj=Int(round(t_f/Δt)) #number of trajectory points
 
 tmax=n_traj*Δt

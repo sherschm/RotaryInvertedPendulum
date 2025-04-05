@@ -2,7 +2,7 @@
 
 julia_version = "1.11.4"
 manifest_format = "2.0"
-project_hash = "b180d676ae7ea6471dc4792356451e63df0efc1f"
+project_hash = "9b349eb4e1fa159afa5032173069e592df488e23"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "e1ce448a0d7f88168ffe2eeac4549c32d45a42d1"
@@ -1638,18 +1638,6 @@ weakdeps = ["ForwardDiff"]
 
     [deps.NonlinearSolveSpectralMethods.extensions]
     NonlinearSolveSpectralMethodsForwardDiffExt = "ForwardDiff"
-
-[[deps.OSQP]]
-deps = ["Libdl", "LinearAlgebra", "MathOptInterface", "OSQP_jll", "SparseArrays"]
-git-tree-sha1 = "50faf456a64ac1ca097b78bcdf288d94708adcdd"
-uuid = "ab2f91bb-94b4-55e3-9ba0-7f65df51de79"
-version = "0.8.1"
-
-[[deps.OSQP_jll]]
-deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
-git-tree-sha1 = "d0f73698c33e04e557980a06d75c2d82e3f0eb49"
-uuid = "9c4f68bf-6205-5545-a508-2878b064d984"
-version = "0.600.200+0"
 
 [[deps.OffsetArrays]]
 git-tree-sha1 = "5e1897147d1ff8d98883cda2be2187dcf57d8f0c"

@@ -96,6 +96,29 @@ function dynamics_acc_ctrl_terms(M,N,Damping_force)
 
   return  M_acc, N_acc, B_acc
 end
+#=
+function dynamics_acc_ctrl_terms_test(vars...)
+  #Reduces the equations for the situation where velocity of θ1 is the control input.
+
+  θ_in=collect(vars[1:ndof])
+  θd_in=collect(vars[ndof+1:2*ndof])
+  θdd_in=collect(vars[2*ndof+1:3*ndof])
+  u_in=collect(vars[3*ndof+1])
+
+  M=M_f(θ_in...)
+  N_f(θ_in...,θd_in...)
+  #Damping=p[1]
+  D=[0 0;0 Damping]
+  Damping_force=D*θd_in
+
+  A=[1 0] #constraint
+
+  M_acc=M
+  N_acc=N+Damping_force-A'*inv(A*inv(M)*A')*A*inv(M)*(N+Damping_force)
+  B_acc=A'*inv(A*inv(M)*A')
+
+  return  M_acc, N_acc, B_acc
+end=#
 
 function rot_pend_dynamics_sym(ctrl_input_type,M,N,Damping)
   #This outputs the function that is integrated.
@@ -104,7 +127,7 @@ function rot_pend_dynamics_sym(ctrl_input_type,M,N,Damping)
   Symbolics.@variables t θ1(t) θ2(t) θ1d(t) θ2d(t) θ1dd(t) θ2dd(t) u(t)
 
   x=[θ1;θ2;θ1d;θ2d]
-  D=[0 0;0 Damping]
+  D=[0 0;0 -Damping]
   
   if ctrl_input_type=="torque"
 

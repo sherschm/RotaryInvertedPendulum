@@ -53,7 +53,7 @@ function SpinUpTrajectory(cmd,n_traj,Δt,q0,dynamic_funcs,T_f)
         Objective = T_err#+effort#
         return T.(Objective)
     end
-
+    
     function Dyn_constraint_vec(vars::T...) where T
         # A function that ensures the physics are considered in the optimisation
         # This will be used as a constraint.
@@ -66,9 +66,28 @@ function SpinUpTrajectory(cmd,n_traj,Δt,q0,dynamic_funcs,T_f)
         D=[0 0;0 Damping] #damping matrix
 
         #This expression must equal zeros in the optimisation solution.
-        dynamic_err = M_f(q_in...)*qdd_in +N_f(q_in...,qd_in...)-[F_in;0]+D*qd_in
+        dynamic_err = M_f(q_in...)*qdd_in +N_f(q_in...,qd_in...)-[F_in;0]-D*qd_in
      return T.(dynamic_err)
     end
+
+#=
+    # ODE function for DifferentialEquations.jl
+    function Dyn_constraint_vec(vars::T...) where T
+        θ_in=collect(vars[1:ndof])
+        θd_in=collect(vars[ndof+1:2*ndof])
+        θdd_in=collect(vars[2*ndof+1:3*ndof])
+        u_in=collect(vars[3*ndof+1])
+
+        x=[θ_in;θd_in]
+
+        Damping=p[1]
+        D=[0 0;0 Damping]
+        Damping_force=D*θd_in
+    
+        M_a, N_a, B_a = dynamics_acc_ctrl_terms(M_f(θ_in...),N_f(x...),Damping_force)
+        
+        return T.(M_a*θdd_in-(B_a*u_in-N_a))
+    end=#
 
     #memoize the dynamic constraint. This is necessary in JuMP because Dyn_constraint_vec outputs a vector
     Dyn_constraint_memo = memoize(Dyn_constraint_vec, ndof)
