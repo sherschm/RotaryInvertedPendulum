@@ -31,7 +31,7 @@ function u_f(x,t)
     max_acc = 200  # rad/s
     acc_limited = clamp(acc, -max_acc, max_acc)
     return acc_limited
-    #return 0
+   # return 0
 end
 
 # ODE function for DifferentialEquations.jl
@@ -40,7 +40,7 @@ function dynamics_acc_ctrl(x, p, t)
     θd=collect(x[3:4])
     
     Damping=p[1]
-    D=[0 0;0 -Damping]
+    D=[0 0;0 Damping]
     Damping_force=D*θd
   
     M_a, N_a, B_a = dynamics_acc_ctrl_terms(M_f(θ...),N_f(x...),Damping_force)
@@ -51,7 +51,7 @@ end
 #simulate!
 q0=[0.1;pi+0.2;0;0] #initial conditions - these are: [θ1(t_0);θ2(t_0);θ2d(t_0)].
 #q0=[0.0;pi/10;0;0] #initial conditions - these are: [θ1(t_0);θ2(t_0);θ2d(t_0)].
-tspan = (0.0, 20.0)
+tspan = (0.0, 10.0)
 ps=Damping
 prob = ODEProblem(dynamics_acc_ctrl, q0, tspan,ps)
 

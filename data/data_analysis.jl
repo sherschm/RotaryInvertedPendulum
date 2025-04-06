@@ -118,7 +118,7 @@ function dynamics_acc_ctrl(x, p, t)
     θ=collect(x[1:2])
     θd=collect(x[3:4])
     
-   acc_P_ctrl=100*(pos_cmd_f(t)[1]-θ[1])
+   acc_P_ctrl=1000*(pos_cmd_f(t)[1]-θ[1])
 
     Damping=p[1]
     D=[0 0;0 Damping]
@@ -138,10 +138,10 @@ ps=Damping
 prob = ODEProblem(dynamics_acc_ctrl, q0, tspan,ps)
 
 #Simulate & animate!
-tvec,q_sol,qd_sol=pend_sim(prob)#,reltol=1e-10,abstol=1e-10)
-plot(tvec,q_sol)
+tvec_out,q_sol,qd_sol=pend_sim(prob)#,reltol=1e-10,abstol=1e-10)
+plot(tvec_out,q_sol)
 ctrl_vec=zeros(length(tvec))
 energy=zeros(length(tvec))
 
 plot_params=(l1,l2)
-rot_pendulum_animator(q_sol,tvec,plot_params;name="sim_test")
+rot_pendulum_animator(q_sol,tvec_out,plot_params;name="sim_test")

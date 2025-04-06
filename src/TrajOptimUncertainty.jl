@@ -1,98 +1,109 @@
 using Random
 using DifferentialEquations
 using Plots
+using Distributions
+using RotaryInvertedPendulum
+using LinearAlgebra
 
-# Define the implicit inverted pendulum dynamics
-function pendulum_dynamics!(du, u, p, t)
-    x, θ, x_dot, θ_dot = u
-    coeffs, T = p
-    control = sum(coeffs[i+1] * (t/T)^i for i in 0:(length(coeffs)-1))
-    
-    g = 9.81  # gravity (m/s^2)
-    m = 1.0   # pendulum mass (kg)
-    l = 1.0   # pendulum length (m)
-    b = 0.1   # damping coefficient
-    I = m * l^2  # moment of inertia
-    
-    θ_ddot = (m * g * l * sin(θ) - b * θ_dot + control) / I
-    x_ddot = control / m
-    
-    du[1] = x_dot
-    du[2] = θ_dot
-    du[3] = x_ddot
-    du[4] = θ_ddot
-end
+#create model
+include("parameters.jl")
+(M,N,M_f,N_f), sys_cont, Total_energy, T_f,V_f = generate_dynamics(dyn_params,x_equil)
+
+Damping_dist = truncated(Normal(Damping, 0.0001), 0.5*Damping, 2*Damping)
+trajectories = 100
 
 # Generate control input from polynomial coefficients
-function polynomial_control(coeffs, t, T)
+function polynomial_control(coeffs, t,T)
     degree = length(coeffs) - 1
     return sum(coeffs[i+1] * (t/T)^i for i in 0:degree)
 end
 
-# Cost function (to minimize time to reach an upright position)
-function cost_function(solution)
-    final_time = solution.t[end]
-    final_angle = solution.u[end][1]
-    final_velocity = solution.u[end][2]
+n_coeffs=10
+
+# ODE function for DifferentialEquations.jl
+function dynamics_acc_ctrl_test!(du, u, p, t)
+    θ=collect(u[1:2])
+    θd=collect(u[3:4])
     
-    # Penalize if we don't end up upright (θ ~ 0) or not at rest (θ_dot ~ 0)
-    #cost = final_time + 10 * abs(final_angle) + 1000 * abs(final_velocity)
-    cost =  10 * abs(pi-final_angle) + 1000 * abs(final_velocity)
-    return cost
+    Damping_ratio=p[1]
+    coeffs=p[2:n_coeffs+1]
+
+    u_f(t)=polynomial_control(coeffs, t,1)
+
+    D=[0 0;0 Damping_ratio]
+    #D=[0 0;0 0]
+    Damping_force=D*θd
+  
+    M_a, N_a, B_a = dynamics_acc_ctrl_terms(M_f(θ...),N_f(u...),Damping_force)
+    
+     # Fill in-place the du vector (du = dx/dt = [θd; θ̈])
+     du[1:2] .= θd
+     du[3:4] .= M_a \ (B_a * u_f(t) - N_a)
+    #return vec([θd;inv(M_a)*(B_a*u_f(t)-N_a)])
 end
 
-# Monte Carlo simulation
-function monte_carlo_optimization(num_simulations, initial_angle, max_time)
-    best_cost = Inf
-    best_solution = nothing
-    
-    degree = 5  # Polynomial degree for control function
-    initial_coeffs = zeros(degree + 1)
+#simulate!
+q0=[0.1;pi-0.2;0;0] #initial conditions - these are: [θ1(t_0);θ2(t_0);θ2d(t_0)].
+#q0=[0.0;pi/10;0;0] #initial conditions - these are: [θ1(t_0);θ2(t_0);θ2d(t_0)].
+tspan = (0.0, 5.0)
+ps=[rand(Random.GLOBAL_RNG,Damping_dist);0.01*ones(n_coeffs)]
+prob = ODEProblem(dynamics_acc_ctrl_test!, q0, tspan, ps)
+sol = solve(prob, Tsit5())
+#Simulate & animate!
+#tvec,q_sol,qd_sol=pend_sim(prob)#,reltol=1e-10,abstol=1e-10)
+#plot(tvec,q_sol)
 
-    # Simulation loop
-    for i in 1:num_simulations
-        # Introduce random uncertainty in parameters
-        mass = 1.0 + 0.1 * randn()   # Random mass perturbation ±10%
-        length = 1.0 + 0.05 * randn() # Random length perturbation ±5%
-        gravity = 9.81 + 0.1 * randn() # Random gravity perturbation ±1%
-        
-        # Initial conditions
-        initial_conditions = [initial_angle, 0.0]  # Initial angle and velocity
-       # parameters = [mass, length, gravity]
+# Define ensemble with randomized damping
+ensemble_prob = EnsembleProblem(prob, prob_func = (prob, i, repeat) -> begin
+    new_p = [rand(Damping_dist);ps[2:end]]
+    remake(prob, p = new_p)
+end)
 
-        parameters= coeffs, T 
-        # Time span for the simulation
-        tspan = (0.0, max_time)
-        
-        # Solve the system of equations
-        prob = ODEProblem(pendulum_dynamics!, initial_conditions, tspan, parameters)
-        solution = solve(prob, Tsit5(), saveat=0.01)
-        
-        # Evaluate the cost
-        current_cost = cost_function(solution)
-        
-        # If the current cost is better, update the best solution
-        if current_cost < best_cost
-            best_cost = current_cost
-            best_solution = solution
-        end
-    end
-    
-    return best_solution, best_cost
+# Solve
+ensemblesol = solve(ensemble_prob, Tsit5(), EnsembleThreads(), trajectories = 100)
+
+using Optimization, OptimizationNLopt, OptimizationMOI, SciMLExpectations
+
+gd = GenericDistribution(Damping_dist)
+
+#h(x, u, p) = u, [p[1];x[1]]
+obs(sol, p) = abs2(sol[2, end] - pi) + abs2(sol[3, end]) + abs2(sol[4, end])
+#h(x,u, p) =u, p
+h(x,u, p) = u, p
+
+function 𝔼_loss(coeffs, pars)
+    full_p = [Damping; coeffs]
+    prob = ODEProblem(dynamics_acc_ctrl_test!, q0, tspan, full_p)
+    sm = SystemMap(prob, Tsit5())
+    exprob = ExpectationProblem(sm, obs, h, gd)
+    sol = solve(exprob, Koopman(), ireltol=1e-5)
+    return sol.u  # scalar loss
 end
 
-# Running the optimization
-num_simulations = 1000
-initial_angle = 0.0 # Start at 0.1 rad (5.7 degrees)
-max_time = 10.0     # Max time for the simulation (seconds)
+coeffs_init = 0.3*ones(n_coeffs)
+# p = [0.3] is the fixed value passed to the function; just a placeholder
+opt_f = OptimizationFunction(𝔼_loss, Optimization.AutoForwardDiff())
+opt_ini = 0.3*ones(n_coeffs)
+opt_lb = -0.1*ones(n_coeffs)
+opt_ub = 100*ones(n_coeffs)
+opt_prob = OptimizationProblem(opt_f, coeffs_init, p=[Damping],
+                               lb = -1000 * ones(n_coeffs),
+                               ub = 1000 * ones(n_coeffs))
+                               optimizer = OptimizationMOI.MOI.OptimizerWithAttributes(
+                                NLopt.Optimizer, "algorithm" => :LD_MMA
+                            )
+            
 
-best_solution, best_cost = monte_carlo_optimization(num_simulations, initial_angle, max_time)
+optimizer = OptimizationMOI.MOI.OptimizerWithAttributes(NLopt.Optimizer,
+    "algorithm" => :LD_MMA)
+opt_sol = solve(opt_prob, optimizer)
+minx = opt_sol.u
 
-# Plot the best solution
-if best_solution != nothing
-    plot(best_solution.t, best_solution.u[1, :], label="Angle (θ)", xlabel="Time (s)", ylabel="Angle (rad)")
-    plot!(best_solution.t, best_solution.u[2, :], label="Angular Velocity (θ_dot)", xlabel="Time (s)", ylabel="Velocity (rad/s)")
-    title!("Optimized Inverted Pendulum Trajectory")
-end
-plot( best_solution, label="Angle (θ)", xlabel="Time (s)", ylabel="Angle (rad)")
-println("Best Cost: ", best_cost)
+
+# Define ensemble with randomized damping
+ensemble_prob = EnsembleProblem(prob, prob_func = (prob, i, repeat) -> begin
+    new_p = [rand(Damping_dist);minx]
+    remake(prob, p = new_p)
+end)
+
+ensemblesol = solve(ensemble_prob, Tsit5(), EnsembleThreads(), trajectories = 100)
