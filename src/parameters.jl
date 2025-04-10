@@ -75,5 +75,7 @@ Ip=Float16.(I1+I2+I3)*0.85
 observed_freq=9/7.4625
 
 dyn_params=(rc,m,Ip,g,Damping)
+
+encoder_steps_per_rad=pi/1200
 #Ip=Ip/10
 #Ip=zeros(3,3)

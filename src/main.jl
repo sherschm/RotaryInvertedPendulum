@@ -15,7 +15,7 @@ sys_discrete=c2d(sys_cont,Ts)
 #Define LQR objective parameters
 Q=Diagonal([0.1,0.01,0.01,0.01]) 
 #Q=Diagonal([1,1,1,1]) 
-R=0.01
+R=0.001
 #R=1 #weighting matrix
 
 #calculate LQR gains
@@ -50,6 +50,7 @@ end
 
 #simulate!
 q0=[0.1;pi+0.2;0;0] #initial conditions - these are: [θ1(t_0);θ2(t_0);θ2d(t_0)].
+#q0=[0.1;2.5;0;0]
 #q0=[0.0;pi/10;0;0] #initial conditions - these are: [θ1(t_0);θ2(t_0);θ2d(t_0)].
 tspan = (0.0, 10.0)
 ps=Damping
