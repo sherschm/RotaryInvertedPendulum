@@ -1,0 +1,7 @@
+Variable Descriptions
+======================
+
+Joint 2 damping mean = 0.0002, standard devation = 5.0e-5
+Trajectory time = 6 s.
+Control function = fourier
+Number of control coefficients = 100

@@ -5,12 +5,14 @@ using Distributions
 using RotaryInvertedPendulum
 using LinearAlgebra
 using DelimitedFiles
+using Optimization, OptimizationNLopt, OptimizationMOI, SciMLExpectations
 
 #create model
 include("parameters.jl")
 (M,N,M_f,N_f), sys_cont, Total_energy, T_f,V_f = generate_dynamics(dyn_params,x_equil)
 
-Damping_dist = truncated(Normal(Damping, 0.00005), 0.5*Damping, 2*Damping)
+Damping_sd=0.00005
+Damping_dist = truncated(Normal(Damping, Damping_sd), 0.5*Damping, 2*Damping)
 trajectories = 70
 
 # Generate control input from polynomial coefficients
@@ -30,6 +32,20 @@ function chebyshev_control(t, coeffs, T_final)
     return dot(coeffs, T)
 end
 
+function fourier_control(t::Real, coeffs::Vector{<:Real}, T::Real)
+    N = div(length(coeffs)-1, 2)  # Number of harmonics
+    a0 = coeffs[1]
+    u = a0 / 2
+
+    for n in 1:N
+        an = coeffs[2n]
+        bn = coeffs[2n + 1]
+        u += an * cos(2π * n * t / T) + bn * sin(2π * n * t / T)
+    end
+
+    return u
+end
+
 function bernstein_control(t, coeffs, T_final)
     n = length(coeffs) - 1  # degree of the polynomial
     τ = t / T_final         # normalize time to [0, 1]
@@ -43,8 +59,19 @@ function bernstein_control(t, coeffs, T_final)
     return u
 end
 
+control_parametrisation="fourier"
 Tf=6
-n_coeffs=50
+n_coeffs=100
+#=
+Tf=6
+n_coeffs=50=#
+if control_parametrisation == "fourier"
+    control(t, coeffs, T_final)= fourier_control(t, coeffs, T_final)
+elseif control_parametrisation == "chebyshev"
+    control(t, coeffs, T_final)= chebyshev_control(t, coeffs, T_final)
+elseif control_parametrisation == "bernstein"
+    control(t, coeffs, T_final)= bernstein_control(t, coeffs, T_final)
+end
 
 # ODE function for DifferentialEquations.jl
 function dynamics_acc_ctrl_test!(du, u, p, t)
@@ -54,9 +81,7 @@ function dynamics_acc_ctrl_test!(du, u, p, t)
     Damping_ratio=p[1]
     coeffs=p[2:n_coeffs+1]
 
-    #u_f(t)=polynomial_control(coeffs, t,Tf)
-    u_f(t)=chebyshev_control(t,coeffs, Tf)
-   # u_f(t)=bernstein_control(t,coeffs, Tf)
+    u_f(t)=control(t,coeffs, Tf)
 
     D=[0 0;0 Damping_ratio]
     #D=[0 0;0 0]
@@ -64,10 +89,8 @@ function dynamics_acc_ctrl_test!(du, u, p, t)
   
     M_a, N_a, B_a = dynamics_acc_ctrl_terms(M_f(θ...),N_f(u...),Damping_force)
     
-     # Fill in-place the du vector (du = dx/dt = [θd; θ̈])
-     du[1:2] .= θd
-     du[3:4] .= M_a \ (B_a * u_f(t) - N_a)
-    #return vec([θd;inv(M_a)*(B_a*u_f(t)-N_a)])
+    du[1:2] .= θd
+    du[3:4] .= M_a \ (B_a * u_f(t) - N_a)
 end
 
 #simulate!
@@ -77,9 +100,6 @@ tspan = (0.0, Tf)
 ps=[rand(Random.GLOBAL_RNG,Damping_dist);0.01*ones(n_coeffs)]
 prob = ODEProblem(dynamics_acc_ctrl_test!, q0, tspan, ps)
 sol = solve(prob, Tsit5())
-#Simulate & animate!
-#tvec,q_sol,qd_sol=pend_sim(prob)#,reltol=1e-10,abstol=1e-10)
-#plot(tvec,q_sol)
 
 # Define ensemble with randomized damping
 ensemble_prob = EnsembleProblem(prob, prob_func = (prob, i, repeat) -> begin
@@ -87,47 +107,23 @@ ensemble_prob = EnsembleProblem(prob, prob_func = (prob, i, repeat) -> begin
     remake(prob, p = new_p)
 end)
 
-# Solve
+# Solve 
 ensemblesol = solve(ensemble_prob, Tsit5(), EnsembleThreads(), trajectories = 100)
-
-using Optimization, OptimizationNLopt, OptimizationMOI, SciMLExpectations
 
 gd = GenericDistribution(Damping_dist)
 
-#h(x, u, p) = u, [p[1];x[1]]
-#obs(sol, p) = abs2(sol[2, end] - pi) + abs2(sol[3, end]) + abs2(sol[4, end])
-
 λ = 0.001  # regularization strength
-#=obs(sol, p) = begin
-    coeffs = p[2:end]  # assuming p[1] = damping, p[2:end] = Chebyshev coeffs
-    reg_term = λ * sum(abs2, coeffs)
-    terminal_cost = 10*abs2(sol[2, end] - π) + 0.1*abs2(sol[4, end]) + 0.1*abs2(sol[3, end]) + 0.1*abs2(sol[1, end])# + abs2(sol[3, end]) + abs2(sol[4, end])
-
-    return terminal_cost + reg_term
-end# =#
-
 obs(sol, p) = begin
     coeffs = p[2:end]
-    terminal_cost = 100 * abs2(sol[2, end] - (π+0.1)) + abs2(sol[3, end]) + abs2(sol[1, end])+abs2(sol[4, end])
-    
+    terminal_cost = 100 * abs2(sol[2, end] - (π+0.2)) + abs2(sol[3, end]) + abs2(sol[1, end])+abs2(sol[4, end])
+    #terminal_cost = 100 * abs2(sol[2, end-0.3] - (π+0.1)) + abs2(sol[3, end-0.3]) + abs2(sol[1, end-0.3])+abs2(sol[4, end-0.3])
     reg_term = λ * sum(abs2, coeffs)
     dt = sol.t[end] / (length(sol.t) - 1)
     # Running cost to penalize being far from π throughout the trajectory
-   #run_cost = sum(abs2, + sol[3, :]) * dt   # integrate over time
-   # return terminal_cost +  0.1*run_cost + reg_term
-    return terminal_cost + reg_term
+   run_cost = sum(abs2, + sol[3, :]) * dt   # integrate over time
+    return terminal_cost +  0.1*run_cost + reg_term
+    #return terminal_cost + reg_term
 end
-#=
-obs(sol, p) = begin
-    coeffs = p[2:end]
-    terminal_cost = 10 * sum(abs2,(sol[2, end-5:end] .- π)) #+abs2(sol[4, end])
-    
-    reg_term = λ * sum(abs2, coeffs)
-    return terminal_cost  + reg_term
-end
-=#
-#h(x,u, p) =u, p
-#h(x,u, p) = u, [p[1];x[1]]
 
 h(x,u, p) = u, p
 prob_template = ODEProblem(dynamics_acc_ctrl_test!, q0, tspan, ps)
@@ -179,8 +175,33 @@ tvec_out=0.005:0.005:Tf
 acc_cmd_out=zeros(length(tvec_out))
 
 for i in 1:length(tvec_out)
-
-    acc_cmd_out[i]=chebyshev_control(tvec_out[i], optimal_coefficients, Tf)
+    acc_cmd_out[i]=control(tvec_out[i], optimal_coefficients, Tf)
 end
 
-writedlm("data/swing_up/swingup_acc_robust_cmd.csv", [Float32.(tvec_out) Float32.(acc_cmd_out/encoder_steps_per_rad)],",")
+data_dir="data/swing_up/robust/"
+writedlm(data_dir*"swingup_acc_robust_cmd.csv", [Float32.(tvec_out) Float32.(acc_cmd_out/encoder_steps_per_rad)],",")
+
+p1=plot(ensemblesol,(vars=1),xlabel="Time (s)",ylabel="Theta 1 (rad)",dpi=300)
+p2=plot(ensemblesol,(vars=2),xlabel="Time (s)",ylabel="Theta 2 (rad)",dpi=300)
+p3=plot(ensemblesol,(vars=3),xlabel="Time (s)",ylabel="Theta 1 velocity (rad/s)",dpi=300)
+p4=plot(ensemblesol,(vars=4),xlabel="Time (s)",ylabel="Theta 2 velocity (rad/s)",dpi=300)
+
+plot(p1,p2,p3,p4,layout=(2,2),size=(700,500),dpi=300)
+savefig(data_dir*"trajectory_reponse")
+function write_variable_descriptions(filename::String)
+    open(filename, "w") do io
+        # Write header
+        println(io, "Variable Descriptions")
+        println(io, "======================\n")
+
+        println(io, "Joint 2 damping mean = $Damping, standard devation = $Damping_sd")
+        println(io, "Trajectory time = $Tf s.")
+
+        println(io, "Control function = "*control_parametrisation)
+        println(io, "Number of control coefficients = $n_coeffs")
+    end
+
+    println("Variable descriptions written to $filename")
+end
+
+write_variable_descriptions(data_dir*"trajectory_parameters.txt")
