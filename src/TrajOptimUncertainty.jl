@@ -13,6 +13,7 @@ include("parameters.jl")
 
 Damping_sd=0.00005
 Damping_dist = truncated(Normal(Damping, Damping_sd), 0.5*Damping, 2*Damping)
+#R_
 trajectories = 70
 
 # Generate control input from polynomial coefficients
@@ -60,7 +61,7 @@ function bernstein_control(t, coeffs, T_final)
 end
 
 control_parametrisation="fourier"
-Tf=6
+Tf=4
 n_coeffs=100
 #=
 Tf=6
@@ -115,14 +116,15 @@ gd = GenericDistribution(Damping_dist)
 λ = 0.001  # regularization strength
 obs(sol, p) = begin
     coeffs = p[2:end]
-    terminal_cost = 100 * abs2(sol[2, end] - (π+0.2)) + abs2(sol[3, end]) + abs2(sol[1, end])+abs2(sol[4, end])
+    terminal_cost = 1000 * abs2(sol[2, end] - (π)) + abs2(sol[3, end]) + abs2(sol[1, end]) + 10*abs2(sol[4, end])+control(Tf, coeffs, Tf)
     #terminal_cost = 100 * abs2(sol[2, end-0.3] - (π+0.1)) + abs2(sol[3, end-0.3]) + abs2(sol[1, end-0.3])+abs2(sol[4, end-0.3])
     reg_term = λ * sum(abs2, coeffs)
     dt = sol.t[end] / (length(sol.t) - 1)
+    
     # Running cost to penalize being far from π throughout the trajectory
-   run_cost = sum(abs2, + sol[3, :]) * dt   # integrate over time
-    return terminal_cost +  0.1*run_cost + reg_term
-    #return terminal_cost + reg_term
+   #run_cost = sum(abs2, + sol[3, :]) * dt   # integrate over time
+    #return terminal_cost +  0.1*run_cost + reg_term
+    return terminal_cost + reg_term
 end
 
 h(x,u, p) = u, p
@@ -188,6 +190,10 @@ p4=plot(ensemblesol,(vars=4),xlabel="Time (s)",ylabel="Theta 2 velocity (rad/s)"
 
 plot(p1,p2,p3,p4,layout=(2,2),size=(700,500),dpi=300)
 savefig(data_dir*"trajectory_reponse")
+
+plot(tvec_out,acc_cmd_out,xlabel="Time (s)", ylabel= "Acceleration (rad/s^2)")
+savefig(data_dir*"ctrl_acceleration")
+
 function write_variable_descriptions(filename::String)
     open(filename, "w") do io
         # Write header

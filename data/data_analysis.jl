@@ -24,16 +24,15 @@ end
 
 #
 #data=CSV.read("C:\\Downloads\\test_result_200hz.csv",DataFrame)
-data=CSV.read("C:\\Downloads\\test_result_reduced_jerk.csv",DataFrame)
-data=data[2:end,:]
-#data=CSV.read("data/control_data_logs_example.csv",DataFrame)
+dir="E:\\Documents\\dev\\RotaryInvertedPendulum\\data\\swing_up\\robust\\16_04_25 - 1\\"
+
+data=CSV.read(dir*"swingup_acc_robust_cmd_result.csv",DataFrame)
+data=data[2:end-1,:]
 
 #select nice data range
-valid_i=6:size(data,1)-20
-#valid_i=size(data,1)-20:size(data,1)
 valid_i=1:size(data,1)
 
-#=
+
 tvec=(data."#Time (uint32)[1]"[valid_i].-data."#Time (uint32)[1]"[valid_i[1]])/10^6
 
 average_rate=length(tvec)/maximum(tvec) #Hz
@@ -42,16 +41,24 @@ average_rate=length(tvec)/maximum(tvec) #Hz
 
 θ2_raw=data."EncoderPosition (uint32)[1]"[valid_i]
 encoder_points_per_rad=pi/1200
-
+for i in 1:length(θ2_raw)
+    if θ2_raw[i]>=50000
+        θ2_raw[i]=θ2_raw[i]-65535
+    end
+end
 #convert to radians
 #θ2_vec=correct_encoder_vector(θ2_raw,65535)*encoder_points_per_rad
 θ2_vec=θ2_raw*encoder_points_per_rad.-θ2_raw[1]*encoder_points_per_rad
-θ1_vec=θ1_raw*encoder_points_per_rad =#
+θ1_vec=θ1_raw*encoder_points_per_rad 
 
-θ1_vec=q_spin_up[:,1]
-θ2_vec=q_spin_up[:,2]
 
+
+#θ1_vec=q_spin_up[:,1]
+#θ2_vec=q_spin_up[:,2]
+plot(tvec,θ1_vec)
 plot(tvec,θ2_vec)
+
+#test=θ2_raw[(θ2_raw.> 60000)]
 
 plot_rot_pendulum([θ1_vec[end];θ2_vec[end]],(l1,l2))
 
@@ -118,8 +125,8 @@ function dynamics_acc_ctrl(x, p, t)
     θ=collect(x[1:2])
     θd=collect(x[3:4])
     
-   acc_P_ctrl=1000*(pos_cmd_f(t)[1]-θ[1])
-
+  # acc_P_ctrl=100*(pos_cmd_f(t)[1]-θ[1])
+  acc_P_ctrl=acc_cmd_f(t)[1]
     Damping=p[1]
     D=[0 0;0 Damping]
     Damping_force=D*θd
@@ -145,3 +152,6 @@ energy=zeros(length(tvec))
 
 plot_params=(l1,l2)
 rot_pendulum_animator(q_sol,tvec_out,plot_params;name="sim_test")
+
+pl=plot(q_sol)
+pr=plot!(tvec,θ_data)

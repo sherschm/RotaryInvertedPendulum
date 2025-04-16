@@ -32,7 +32,7 @@ g=9.81 #gravity
 
 rc=Float16.((1/(m))*(m1*[0;l1/2;0]+m2*[0;l1;-l2/2]+m_tip*[0;l1;-l2]))
 
-Damping = 0.0002#[0 0;0 0.0002]
+Damping = 0.0003#[0 0;0 0.0002]
 
 function I_tube(r1,r2,h,mi,offset,axis)
     
