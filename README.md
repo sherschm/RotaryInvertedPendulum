@@ -21,10 +21,8 @@ code .
 ```
 
 - run src/main.jl from VSCode. The first time may take a while due to importing / precompiling several required Julia packages.
-## To run the code from cmd prompt:
-Clone the repository and move to its directory.
 
-main.jl runs through the model derivation and simulates LQR stabilisation control from some set of initial conditions: $[ \theta_1 \\ \theta_2 \\ \dot{\theta}_1 \\ \dot{\theta}_2]$ :
+- THis script runs through the model derivation and simulates LQR stabilisation control from some set of initial conditions: $[ \theta_1 \\ \theta_2 \\ \dot{\theta}_1 \\ \dot{\theta}_2]$ :
 
 <img src="./anims/LQR_stabilisation.gif" alt="response_gif" width="480"/> <img src="./plots/response.png" alt="pendulum response" width="350"/>
 
