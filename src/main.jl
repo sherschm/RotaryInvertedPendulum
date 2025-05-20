@@ -14,13 +14,10 @@ sys_discrete=c2d(sys_cont,Ts)
 
 #Define LQR objective parameters
 Q=Diagonal([0.1,0.01,0.01,0.01]) 
-#Q=Diagonal([1,1,1,1]) 
 R=0.001
-#R=1 #weighting matrix
 
 #calculate LQR gains
 K_opt=lqr(sys_discrete, Q, R) #Optimal feedback gain matrix
-#K_opt=[-1.00 174.58 -2.01 22.95]
 
 function u_f(x,t)
     # Acceleration control law using LQR
@@ -31,7 +28,6 @@ function u_f(x,t)
     max_acc = 200  # rad/s
     acc_limited = clamp(acc, -max_acc, max_acc)
     return acc_limited
-   # return 0
 end
 
 # ODE function for DifferentialEquations.jl
@@ -49,9 +45,7 @@ function dynamics_acc_ctrl(x, p, t)
 end
 
 #simulate!
-q0=[0.1;pi+0.2;0;0] #initial conditions - these are: [θ1(t_0);θ2(t_0);θ2d(t_0)].
-#q0=[0.1;2.5;0;0]
-#q0=[0.0;pi/10;0;0] #initial conditions - these are: [θ1(t_0);θ2(t_0);θ2d(t_0)].
+q0=[0.1;pi+0.2;0;0] #initial conditions - these are: [θ1(t_0);θ2(t_0);θ1d(t_0);θ2d(t_0)].
 tspan = (0.0, 10.0)
 ps=Damping
 prob = ODEProblem(dynamics_acc_ctrl, q0, tspan,ps)
@@ -74,14 +68,14 @@ plot(tvec,ctrl_vec,xlabel="Time (s)",ylabel="Control (rad/s^2)")
 savefig("plots//control_acceleration")
 
 #animate!
-plot_FFT(q_sol[:,2],tvec)
+#plot_FFT(q_sol[:,2],tvec)
 plot_params=(l1,l2)
 rot_pendulum_animator(q_sol,tvec,plot_params;name="LQR_stabilisation")
 
-##Calculate the spin-up trajectory!
+##Calculate the swing-up trajectory!
 q0=[0.0;0.0;0;0] #initial conditions
 t_f=7
-Δt=0.01 #trajectory time-step
+Δt=0.02 #trajectory time-step
 n_traj=Int(round(t_f/Δt)) #number of trajectory points
 
 tmax=n_traj*Δt
