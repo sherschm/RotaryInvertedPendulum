@@ -30,7 +30,7 @@ main.jl runs through the model derivation and simulates LQR stabilisation contro
 
 Then, it generates a 'swing-up' trajectory to get the pendulum from $\theta_2=0$ to $\theta_2=\pi$, using Interior point optimisation:
 
-<img src="./anims/swing_up.gif" alt="spin-up gif" width="480"/> <img src="./plots/swing_up_traj.png" alt="swing-up response" width="350"/>
+<img src="./anims/swing_up.gif" alt="spin-up gif" width="480"/> <img src="./plots/swing_up_plots/swing_up_traj.png" alt="swing-up response" width="350"/>
 
 ## Next steps...
 - Update pendulum parameters.
