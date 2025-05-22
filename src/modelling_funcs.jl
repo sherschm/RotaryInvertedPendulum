@@ -96,31 +96,8 @@ function dynamics_acc_ctrl_terms(M,N,Damping_force)
 
   return  M_acc, N_acc, B_acc
 end
-#=
-function dynamics_acc_ctrl_terms_test(vars...)
-  #Reduces the equations for the situation where velocity of θ1 is the control input.
 
-  θ_in=collect(vars[1:ndof])
-  θd_in=collect(vars[ndof+1:2*ndof])
-  θdd_in=collect(vars[2*ndof+1:3*ndof])
-  u_in=collect(vars[3*ndof+1])
-
-  M=M_f(θ_in...)
-  N_f(θ_in...,θd_in...)
-  #Damping=p[1]
-  D=[0 0;0 Damping]
-  Damping_force=D*θd_in
-
-  A=[1 0] #constraint
-
-  M_acc=M
-  N_acc=N+Damping_force-A'*inv(A*inv(M)*A')*A*inv(M)*(N+Damping_force)
-  B_acc=A'*inv(A*inv(M)*A')
-
-  return  M_acc, N_acc, B_acc
-end=#
-
-function rot_pend_dynamics_sym(ctrl_input_type,M,N,Damping)
+function rot_pend_dynamics_sym(M,N,Damping)
   #This outputs the function that is integrated.
   #Slightly different depending on what the actual control input is
 
@@ -128,51 +105,14 @@ function rot_pend_dynamics_sym(ctrl_input_type,M,N,Damping)
 
   x=[θ1;θ2;θ1d;θ2d]
   D=[0 0;0 -Damping]
-  
-  if ctrl_input_type=="torque"
 
-    ## put dynamics in this form: xdot=f(x,u)
-    τ=0 #e.g: no control
+  Damping_force=D*x[3:4]
+  M_a,N_a,B_a=dynamics_acc_ctrl_terms(M,N,Damping_force)
 
-    Fric1=0# friction at the motor joint
-    Fric2=0 # friction at the pendulum swing joint
+  #Define first order ODE form of dynamic model 
+  return [x[3];x[4];inv(M_a)*(B_a*u-N_a)]
 
-    #Fric1=-0.001*x[3] # friction at the motor joint
-    #Fric2=-0.00005*x[4] # friction at the pendulum swing joint
-
-    return [x[3:4];inv(M)*([u+Fric1;Fric2]-N)]
-   #return [x[3:4];inv(M(x[1:2]...))*([u+Fric1;Fric2]-N(x...))]
-
-  elseif ctrl_input_type=="acceleration"
-
-    
-    Damping_force=D*x[3:4]
-    M_a,N_a,B_a=dynamics_acc_ctrl_terms(M,N,Damping_force)
-
-    #Define first order ODE form of dynamic model 
-
-    #Fric2=-0.00005*x[4] # friction at the pendulum swing joint
-  
-    #return [x[3];x[4];ctrl_law(t);(Fric2-N_stepper_f([x[1];x[2];x[3];x[4]]))/M_stepper_f([x[1];x[2]])]
-    #return [x[3];x[4];ctrl_law(x,t);(Fric2-N_stepper/M_stepper)]
-    return [x[3];x[4];inv(M_a)*(B_a*u-N_a)]
-  elseif ctrl_input_type=="velocity"
-
-    Symbolics.@variables u(t) ud(t)
-
-    M_stepper, N_stepper=dynamics_vel_ctrl(M,N,u,ud)
-    #M_stepper_f=eval(build_function(M_stepper, [θ1, θ2]))
-    #N_stepper_f=eval(build_function(N_stepper, [θ1, θ2, u, θ2d, ud]))
-
-    Fric2=-0.00005*x[3] # friction at the pendulum swing joint
-  
-    return [ctrl_law(x,t);x[4];ctrl_lawd(x,t);(Fric2-N_stepper_f([x[1];x[2];ctrl_law(x,t);x[4];ctrl_lawd(x,t)]))/M_stepper_f([x[1];x[2]])]
-
-  end
 end
-
-
-
 
 function generate_dynamics(dyn_params,x_equil)
   rc,m,Ip,g,Damping=dyn_params
@@ -222,9 +162,7 @@ function generate_dynamics(dyn_params,x_equil)
   M_f=eval(build_function(M, [θ1, θ2]...)[1])
   N_f=eval(build_function(N, x...)[1])
 
-  ctrl_input_type="acceleration"#"torque"#
-
-  rot_pend_dynamics=rot_pend_dynamics_sym(ctrl_input_type,M,N,Damping)
+  rot_pend_dynamics=rot_pend_dynamics_sym(M,N,Damping)
   ndof=2
 
   #Calculate Linearised dynamics

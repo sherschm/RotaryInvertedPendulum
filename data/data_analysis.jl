@@ -24,7 +24,7 @@ end
 
 #
 #data=CSV.read("C:\\Downloads\\test_result_200hz.csv",DataFrame)
-dir="E:\\Documents\\dev\\RotaryInvertedPendulum\\data\\swing_up\\robust\\16_04_25 - 1\\"
+dir="data\\swing_up\\robust\\16_04_25 - 1\\"
 
 data=CSV.read(dir*"swingup_acc_robust_cmd_result.csv",DataFrame)
 data=data[2:end-1,:]
@@ -153,5 +153,5 @@ energy=zeros(length(tvec))
 plot_params=(l1,l2)
 rot_pendulum_animator(q_sol,tvec_out,plot_params;name="sim_test")
 
-pl=plot(q_sol)
-pr=plot!(tvec,θ_data)
+pl=plot(tvec_out,q_sol)
+pr=plot!(tvec_anim,θ_data)
