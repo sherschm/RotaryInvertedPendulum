@@ -21,17 +21,11 @@ code .
 ```
 
 - run src/main.jl from VSCode. The first time may take a while due to importing / precompiling several required Julia packages.
-## To run the code from cmd prompt:
-Clone the repository and move to its directory.
 
-main.jl runs through the model derivation and simulates LQR stabilisation control from some set of initial conditions: $[ \theta_1 \\ \theta_2 \\ \dot{\theta}_1 \\ \dot{\theta}_2]$ :
+- THis script runs through the model derivation and simulates LQR stabilisation control from some set of initial conditions: $[ \theta_1 \\ \theta_2 \\ \dot{\theta}_1 \\ \dot{\theta}_2]$ :
 
 <img src="./anims/LQR_stabilisation.gif" alt="response_gif" width="480"/> <img src="./plots/response.png" alt="pendulum response" width="350"/>
 
 Then, it generates a 'swing-up' trajectory to get the pendulum from $\theta_2=0$ to $\theta_2=\pi$, using Interior point optimisation:
 
-<img src="./anims/swing_up.gif" alt="spin-up gif" width="480"/> <img src="./plots/swing_up_traj.png" alt="swing-up response" width="350"/>
-
-## Next steps...
-- Update pendulum parameters.
-- clean up code.
+<img src="./anims/swing_up.gif" alt="spin-up gif" width="480"/> <img src="./plots/swing_up_plots/swing_up_traj.png" alt="swing-up response" width="350"/>
