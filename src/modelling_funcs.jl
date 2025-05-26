@@ -63,8 +63,8 @@ function pend_sim(prob)
   xdot_sol=Array{Float64}(undef,length(tvec),2) #joint velocity
 
   for i in 1:size(sol.u)[1]
-      x_sol[i,:]=sol.u[i][1:2]
-      xdot_sol[i,:]=sol.u[i][3:4]
+    x_sol[i,:]=sol.u[i][1:2]
+    xdot_sol[i,:]=sol.u[i][3:4]
   end
 
   #animate! 
