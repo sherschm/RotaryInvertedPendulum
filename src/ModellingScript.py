@@ -87,50 +87,7 @@ V_func = sp.lambdify((theta1, theta2, theta1d, theta2d), V, modules='numpy')
 def Total_energy(x_vals):
     return T_func(*x_vals) + V_func(*x_vals)
 
-
-'''def Lagrangian_dynamics(T, V, vars):
-    """
-    Compute symbolic Lagrangian dynamics: Mass matrix M and nonlinear vector N.
-    Parameters:
-        T: Kinetic energy expression (SymPy)
-        V: Potential energy expression (SymPy)
-        vars: Tuple of symbolic variables (t, theta1(t), theta2(t), theta1d(t), theta2d(t), theta1dd(t), theta2dd(t), u(t))
-    Returns:
-        M: 2x2 SymPy Matrix (mass matrix)
-        N: 2x1 SymPy Matrix (nonlinear terms)
-    """
-    t, theta1, theta2, theta1d, theta2d, theta1dd, theta2dd, u = vars
-    L = T - V  # Lagrangian
-    
-    dL_dq = sp.Matrix([sp.diff(L, theta1), sp.diff(L, theta2)])
-    dL_dqd = sp.Matrix([sp.diff(L, theta1d), sp.diff(L, theta2d)])
-    d_dt_dL_dqd = sp.Matrix([sp.diff(dL_dqd[i], t) for i in range(2)])
-
-    # Substitute θ̇ and θ̈ symbols to match variable names for numerical use
-    theta1_sym, theta2_sym = sp.symbols('theta1 theta2')
-    theta1d_sym, theta2d_sym = sp.symbols('theta1d theta2d')
-    theta1dd_sym, theta2dd_sym = sp.symbols('theta1dd theta2dd')
-
-    subs_dict = {
-        theta1: theta1_sym, theta2: theta2_sym,
-        theta1d: theta1d_sym, theta2d: theta2d_sym,
-        theta1dd: theta1dd_sym, theta2dd: theta2dd_sym,
-        sp.Derivative(theta1d, t): theta1dd_sym,
-        sp.Derivative(theta2d, t): theta2dd_sym,
-        sp.Derivative(theta1, t): theta1d_sym,
-        sp.Derivative(theta2, t): theta2d_sym,
-    }
-
-    EOM = (d_dt_dL_dqd - dL_dq).subs(subs_dict)
-
-    # Extract Mass Matrix M and Nonlinear vector N
-    θdd_vec = sp.Matrix([theta1dd_sym, theta2dd_sym])
-    M = EOM.jacobian(θdd_vec)
-    N = EOM - M @ θdd_vec
-
-    return M, N'''
-
-def Lagrangian_dynamics(T, V, vars):
+def Lagrangian_dynamics(T, V):
     """
     Compute symbolic Lagrangian dynamics: Mass matrix M and nonlinear vector N.
     Parameters:
@@ -173,16 +130,8 @@ def Lagrangian_dynamics(T, V, vars):
 
     return M, N
 
-t = sp.symbols('t')
-theta1, theta2 = sp.Function('theta1')(t), sp.Function('theta2')(t)
-theta1d, theta2d = sp.Function('theta1d')(t), sp.Function('theta2d')(t)
-theta1dd, theta2dd = sp.Function('theta1dd')(t), sp.Function('theta2dd')(t)
-u = sp.Function('u')(t)
-
-vars = (t, theta1, theta2, theta1d, theta2d, theta1dd, theta2dd, u)
-
 # Define T, V before calling
-M, N = Lagrangian_dynamics(T, V, vars)
+M, N = Lagrangian_dynamics(T, V)
 
 x_syms = [theta1, theta2, theta1d, theta2d]
 M_f = sp.lambdify(x, M.tolist(), modules="jax")
@@ -268,7 +217,3 @@ print("dx/dt =", dxdt)
 print(A_matrix)
 print(B_matrix)
 
-
-print(M_f(1,1,1,1))
-
-print(N_f(1,1,1,1))
