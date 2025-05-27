@@ -7,40 +7,40 @@ import jax.numpy as jnp
 
 # Define time variable and functions
 t = symbols('t')
-θ1 = Function('θ1')(t)
-θ2 = Function('θ2')(t)
-θ1d = Function('θ1d')(t)
-θ2d = Function('θ2d')(t)
-θ1dd = Function('θ1dd')(t)
-θ2dd = Function('θ2dd')(t)
+theta1 = Function('theta1')(t)
+theta2 = Function('theta2')(t)
+theta1d = Function('theta1d')(t)
+theta2d = Function('theta2d')(t)
+theta1dd = Function('theta1dd')(t)
+theta2dd = Function('theta2dd')(t)
 u = Function('u')(t)
 
 # Pack variables
-vars = (t, θ1, θ2, θ1d, θ2d, θ1dd, θ2dd, u)
-x = Matrix([θ1, θ2, θ1d, θ2d])
+vars = (t, theta1, theta2, theta1d, theta2d, theta1dd, theta2dd, u)
+x = Matrix([theta1, theta2, theta1d, theta2d])
 
 # Rotation matrix function: assuming yaw-pitch rotation (Z-Y axes)
-def calc_R20(θ1, θ2):
+def calc_R20(theta1, theta2):
     Rz = Matrix([
-        [sp.cos(θ1), -sp.sin(θ1), 0],
-        [sp.sin(θ1),  sp.cos(θ1), 0],
+        [sp.cos(theta1), -sp.sin(theta1), 0],
+        [sp.sin(theta1),  sp.cos(theta1), 0],
         [0, 0, 1]
     ])
     Ry = Matrix([
-        [sp.cos(θ2), 0, sp.sin(θ2)],
+        [sp.cos(theta2), 0, sp.sin(theta2)],
         [0, 1, 0],
-        [-sp.sin(θ2), 0, sp.cos(θ2)]
+        [-sp.sin(theta2), 0, sp.cos(theta2)]
     ])
     return Ry * Rz 
 
 # Rotation matrix and derivative
-R20 = calc_R20(θ1, θ2)
+R20 = calc_R20(theta1, theta2)
 
 subs_dict = {
-    sp.Derivative(θ1, t): θ1d,
-    sp.Derivative(θ2, t): θ2d,
-    sp.Derivative(θ1d, t): θ1dd,
-    sp.Derivative(θ2d, t): θ2dd,
+    sp.Derivative(theta1, t): theta1d,
+    sp.Derivative(theta2, t): theta2d,
+    sp.Derivative(theta1d, t): theta1dd,
+    sp.Derivative(theta2d, t): theta2dd,
 }
 
 # Time derivative of R20
@@ -80,13 +80,55 @@ print("\nPotential Energy V:")
 sp.pprint(V, use_unicode=True)
 
 # Optional: create lambda functions for numerical use
-T_func = sp.lambdify(vars, T, modules='numpy')
-V_func = sp.lambdify(vars, V, modules='numpy')
+T_func = sp.lambdify((theta1, theta2, theta1d, theta2d), T, modules='numpy')
+V_func = sp.lambdify((theta1, theta2, theta1d, theta2d), V, modules='numpy')
 
 # Function to compute total energy
-def Total_energy(*x_vals):
+def Total_energy(x_vals):
     return T_func(*x_vals) + V_func(*x_vals)
 
+
+'''def Lagrangian_dynamics(T, V, vars):
+    """
+    Compute symbolic Lagrangian dynamics: Mass matrix M and nonlinear vector N.
+    Parameters:
+        T: Kinetic energy expression (SymPy)
+        V: Potential energy expression (SymPy)
+        vars: Tuple of symbolic variables (t, theta1(t), theta2(t), theta1d(t), theta2d(t), theta1dd(t), theta2dd(t), u(t))
+    Returns:
+        M: 2x2 SymPy Matrix (mass matrix)
+        N: 2x1 SymPy Matrix (nonlinear terms)
+    """
+    t, theta1, theta2, theta1d, theta2d, theta1dd, theta2dd, u = vars
+    L = T - V  # Lagrangian
+    
+    dL_dq = sp.Matrix([sp.diff(L, theta1), sp.diff(L, theta2)])
+    dL_dqd = sp.Matrix([sp.diff(L, theta1d), sp.diff(L, theta2d)])
+    d_dt_dL_dqd = sp.Matrix([sp.diff(dL_dqd[i], t) for i in range(2)])
+
+    # Substitute θ̇ and θ̈ symbols to match variable names for numerical use
+    theta1_sym, theta2_sym = sp.symbols('theta1 theta2')
+    theta1d_sym, theta2d_sym = sp.symbols('theta1d theta2d')
+    theta1dd_sym, theta2dd_sym = sp.symbols('theta1dd theta2dd')
+
+    subs_dict = {
+        theta1: theta1_sym, theta2: theta2_sym,
+        theta1d: theta1d_sym, theta2d: theta2d_sym,
+        theta1dd: theta1dd_sym, theta2dd: theta2dd_sym,
+        sp.Derivative(theta1d, t): theta1dd_sym,
+        sp.Derivative(theta2d, t): theta2dd_sym,
+        sp.Derivative(theta1, t): theta1d_sym,
+        sp.Derivative(theta2, t): theta2d_sym,
+    }
+
+    EOM = (d_dt_dL_dqd - dL_dq).subs(subs_dict)
+
+    # Extract Mass Matrix M and Nonlinear vector N
+    θdd_vec = sp.Matrix([theta1dd_sym, theta2dd_sym])
+    M = EOM.jacobian(θdd_vec)
+    N = EOM - M @ θdd_vec
+
+    return M, N'''
 
 def Lagrangian_dynamics(T, V, vars):
     """
@@ -99,57 +141,52 @@ def Lagrangian_dynamics(T, V, vars):
         M: 2x2 SymPy Matrix (mass matrix)
         N: 2x1 SymPy Matrix (nonlinear terms)
     """
-    t, θ1, θ2, θ1d, θ2d, θ1dd, θ2dd, u = vars
     L = T - V  # Lagrangian
     
     # Partial derivatives of L
-    dL_dθ = [sp.diff(L, θ1), sp.diff(L, θ2)]
-    dL_dθd = [sp.diff(L, θ1d), sp.diff(L, θ2d)]
+    dL_dθ = [sp.diff(L, theta1), sp.diff(L, theta2)]
+    dL_dθd = [sp.diff(L, theta1d), sp.diff(L, theta2d)]
 
     # Total derivatives w.r.t. time
-    dt_dL_dθd = [sp.diff(expr, t) +
-                 sp.diff(expr, θ1)*θ1d + sp.diff(expr, θ2)*θ2d +
-                 sp.diff(expr, θ1d)*θ1dd + sp.diff(expr, θ2d)*θ2dd
-                 for expr in dL_dθd]
+    dt_dL_dθd = sp.Matrix(dL_dθd).diff(t).doit()
 
     # Euler-Lagrange equations
     Eq = [dt_dL_dθd[i] - dL_dθ[i] for i in range(2)]
 
     # Substitute time derivatives
     subs = {
-        sp.Derivative(θ1, t): θ1d,
-        sp.Derivative(θ2, t): θ2d,
-        sp.Derivative(θ1d, t): θ1dd,
-        sp.Derivative(θ2d, t): θ2dd
+        sp.Derivative(theta1, t): theta1d,
+        sp.Derivative(theta2, t): theta2d,
+        sp.Derivative(theta1d, t): theta1dd,
+        sp.Derivative(theta2d, t): theta2dd
     }
     Eq = [sp.simplify(eq.subs(subs)) for eq in Eq]
     # Mass matrix extraction
-    M11 = Eq[0].coeff(θ1dd)
-    M12 = Eq[0].coeff(θ2dd)
-    M21 = Eq[1].coeff(θ1dd)
-    M22 = Eq[1].coeff(θ2dd)
-    M = sp.Matrix([[M11, M12], [M21, M22]])
+    thetadd_vec = sp.Matrix([theta1dd, theta2dd])
+    M = sp.Matrix(Eq).jacobian(thetadd_vec)
+
+    #M = sp.Matrix([[M11, M12], [M21, M22]])
 
     # Compute nonlinear terms: N = Eq - M*[θ1dd; θ2dd]
-    accel_vec = sp.Matrix([θ1dd, θ2dd])
+    accel_vec = sp.Matrix([theta1dd, theta2dd])
     N = sp.simplify(sp.expand(sp.Matrix(Eq) - M * accel_vec))
 
     return M, N
 
 t = sp.symbols('t')
-θ1, θ2 = sp.Function('θ1')(t), sp.Function('θ2')(t)
-θ1d, θ2d = sp.Function('θ1d')(t), sp.Function('θ2d')(t)
-θ1dd, θ2dd = sp.Function('θ1dd')(t), sp.Function('θ2dd')(t)
+theta1, theta2 = sp.Function('theta1')(t), sp.Function('theta2')(t)
+theta1d, theta2d = sp.Function('theta1d')(t), sp.Function('theta2d')(t)
+theta1dd, theta2dd = sp.Function('theta1dd')(t), sp.Function('theta2dd')(t)
 u = sp.Function('u')(t)
 
-vars = (t, θ1, θ2, θ1d, θ2d, θ1dd, θ2dd, u)
+vars = (t, theta1, theta2, theta1d, theta2d, theta1dd, theta2dd, u)
 
 # Define T, V before calling
 M, N = Lagrangian_dynamics(T, V, vars)
 
-x_syms = [θ1, θ2, θ1d, θ2d]
-M_f = sp.lambdify(x_syms, M, modules="jax")
-N_f = sp.lambdify(x_syms, N, modules="jax")
+x_syms = [theta1, theta2, theta1d, theta2d]
+M_f = sp.lambdify(x, M.tolist(), modules="jax")
+N_f = sp.lambdify(x, N.tolist(), modules="jax")
 
 def dynamics_acc_ctrl_terms(x):
 
@@ -159,7 +196,7 @@ def dynamics_acc_ctrl_terms(x):
     Args:
         M_f: function returning mass matrix M given state x (length-4 vector)
         N_f: function returning nonlinear vector N given state x (length-4 vector)
-        x: state vector [θ1, θ2, θ1d, θ2d]
+        x: state vector [theta1, theta2, theta1d, theta2d]
         Damping: scalar damping coefficient
 
     Returns:
@@ -168,8 +205,8 @@ def dynamics_acc_ctrl_terms(x):
         B_acc: Control input mapping matrix (2×1)
     """
     A = jnp.array([[1.0, 0.0]])  # constraint matrix
-    M = M_f(x[0], x[1], x[2], x[3])
-    N = N_f(x[0], x[1], x[2], x[3]).flatten()
+    M = jnp.array(M_f(x[0], x[1], x[2], x[3]))
+    N = jnp.array(N_f(x[0], x[1], x[2], x[3])).flatten()
 
     D_mat = jnp.array([[0.0, 0.0],
                       [0.0, -damping]])
@@ -194,7 +231,7 @@ def rot_pend_dynamics_num(x, u):
     Evaluate the first-order ODE dynamics of the rotating pendulum system.
 
     Args:
-        x: state vector [θ1, θ2, θ1d, θ2d] (length 4)
+        x: state vector [theta1, theta2, theta1d, theta2d] (length 4)
         u: control input (desired angular acceleration θ̈₁)
         M_f: function returning M(x)
         N_f: function returning N(x)
@@ -217,12 +254,12 @@ def f_wrapped(xu):
     u = xu[4]
     return rot_pend_dynamics_num(x, u)
 
-Jacobian = jacfwd(f_wrapped)(jnp.array([0.0, np.pi/2, 0.0, 0.0, 0.0]))
+Jacobian = jacfwd(f_wrapped)(jnp.array([0.0, np.pi, 0.0, 0.0, 0.0]))
 A_matrix = jnp.stack(Jacobian, axis=0)[:4,:4]
 B_matrix = jnp.stack(Jacobian, axis=0)[:,5]
 
 # M, N built previously from your Lagrangian_dynamics(...)
-dxdt = rot_pend_dynamics_num([0.0, np.pi/2, 0.0, 0.0], 0.0)
+dxdt = rot_pend_dynamics_num([0.0, np.pi, 0.0, 0.0], 0.0)
 
 #A_sym = rot_pend_dynamics_num.jacobian(x)
 
